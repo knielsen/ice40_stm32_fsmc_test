@@ -489,11 +489,11 @@ void SystemInit_ExtMemCtl(void)
 
   /* Connect PGx pins to FSMC Alternate function */
   GPIOG->AFR[0]  = 0x00cccccc;
-  GPIOG->AFR[1]  = 0x00000000;
+  GPIOG->AFR[1]  = 0x000000c0;
   /* Configure PGx pins in Alternate function mode */ 
-  GPIOG->MODER   = 0x00000aaa;
+  GPIOG->MODER   = 0x00080aaa;
   /* Configure PGx pins speed to 100 MHz */ 
-  GPIOG->OSPEEDR = 0x00000fff;
+  GPIOG->OSPEEDR = 0x000c0fff;
   /* Configure PGx pins Output type to push-pull */  
   GPIOG->OTYPER  = 0x00000000;
   /* No pull-up, pull-down for PGx pins */ 
@@ -514,6 +514,14 @@ void SystemInit_ExtMemCtl(void)
 
   /* Enable it. */
   FSMC_Bank1->BTCR[0]  |= ((uint32_t)0x00000001);
+
+  /* Enable FSMC bank 1 SRAM 2. */
+  FSMC_Bank1->BTCR[2]  &= ((uint32_t)0x000FFFFE);
+  FSMC_Bank1->BTCR[2]  = 0x00001010;
+  FSMC_Bank1->BTCR[3]  = 0x00010603;
+  FSMC_Bank1E->BWTR[2] = 0x0fffffff;
+  /* Enable it. */
+  FSMC_Bank1->BTCR[2]  |= ((uint32_t)0x00000001);
 
 /*
   Bank1_SRAM2 is configured as follow:

@@ -333,10 +333,21 @@ mem_test(void)
 }
 
 
-void
+static void
+write_fpga(uint32_t offset, uint16_t val)
+{
+  /* 0x64000000 is the start of bank1 SRAM2. */
+  uint16_t *fpga = (uint16_t *)(uint32_t)0x64000000;
+
+  *(fpga+(offset>>1)) = val;
+}
+
+
+static void
 pulse_pin_test(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
+  uint16_t val;
 
   /* GPIOG clock enable */
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
@@ -349,10 +360,13 @@ pulse_pin_test(void)
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
   GPIO_Init(GPIOG, &GPIO_InitStructure);
 
+  val = 0;
   for (;;) {
+    write_fpga(0, val++);
     GPIO_SetBits(GPIOG, GPIO_Pin_0);
     led_on();
     delay(MCU_HZ/3/4);
+    write_fpga(2, val++);
     GPIO_ResetBits(GPIOG, GPIO_Pin_0);
     led_off();
     delay(MCU_HZ/3/4);
