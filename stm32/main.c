@@ -333,44 +333,81 @@ mem_test(void)
 }
 
 
+__attribute__((unused))
 static void
 write_fpga(uint32_t offset, uint16_t val)
 {
   /* 0x64000000 is the start of bank1 SRAM2. */
-  uint16_t *fpga = (uint16_t *)(uint32_t)0x64000000;
+  volatile uint16_t *fpga = (volatile uint16_t *)(uint32_t)0x64000000;
 
   *(fpga+(offset>>1)) = val;
 }
 
 
+__attribute__((unused))
 static void
 pulse_pin_test(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
-  uint16_t val;
+  uint16_t val1, val2;
 
-  /* GPIOG clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+  /* GPIOF clock enable */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
 
-  /* GPIOG Configuration: Output pulse on PG0. */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+  /* GPIOF Configuration: Output pulse on PF11. */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-  GPIO_Init(GPIOG, &GPIO_InitStructure);
+  GPIO_Init(GPIOF, &GPIO_InitStructure);
 
-  val = 0;
+  val1 = 0;
+  val2 = 0;
   for (;;) {
-    write_fpga(0, val++);
-    GPIO_SetBits(GPIOG, GPIO_Pin_0);
+    write_fpga(0, val1++);
+    GPIO_SetBits(GPIOF, GPIO_Pin_11);
     led_on();
     delay(MCU_HZ/3/4);
-    write_fpga(2, val++);
-    GPIO_ResetBits(GPIOG, GPIO_Pin_0);
+    write_fpga(0, val1++);
+    write_fpga(2, val2++);
+    GPIO_ResetBits(GPIOF, GPIO_Pin_11);
     led_off();
     delay(MCU_HZ/3/4);
   }
+}
+
+
+__attribute__((unused))
+static void
+fpga_test(void)
+{
+  led_on();
+  write_fpga(0, 1);
+  write_fpga(2, 1);
+  delay(MCU_HZ/3);
+  led_off();
+  write_fpga(0, 0);
+  write_fpga(2, 0);
+  delay(MCU_HZ/3);
+  led_on();
+  write_fpga(0, 1);
+  write_fpga(2, 0);
+  delay(MCU_HZ/3);
+  led_off();
+  write_fpga(0, 0);
+  write_fpga(2, 1);
+  delay(MCU_HZ/3);
+  led_on();
+  write_fpga(0, 0);
+  write_fpga(2, 0);
+  delay(MCU_HZ/3);
+  led_off();
+  write_fpga(0, 1);
+  write_fpga(2, 1);
+
+  for (;;)
+    ;
 }
 
 
@@ -385,7 +422,8 @@ int main(void)
   serial_puts(USART2, "Hello world, ready to blink!\r\n");
 
   //mem_test();
-  pulse_pin_test();
+  //pulse_pin_test();
+  fpga_test();
 
   return 0;
 }

@@ -7,5 +7,9 @@ set_io LED5 C4
 set_io LED6 B3
 set_io LED7 C3
 set_io crystal_clk J3
-set_io TESTPIN R16
 set_io STM32_PIN P16
+set_io aNE G15
+set_io aNOE H14
+set_io aNWE F14
+set_io aA1 E14
+set_io aD0 F15

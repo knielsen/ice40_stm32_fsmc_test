@@ -91,23 +91,82 @@ module count_pulses_on_leds(input async_pulse_pin, clk, output wire[7:0] leds);
    posedge_counter #(8) mycounter(async_pulse_pin, clk, pulse_count);
    assign leds = pulse_count;
 endmodule // count_pulses_on_leds
+
+
+module simple_write_bus_slave(input aNE, aNOE, aNWE, aA1, aD0,
+			      input clk,
+			      output reg do_write,
+			      output reg w_adr,
+			      output reg w_data
+			      ,output reg testout);
+   // Synchronised inputs.
+   wire sNE, sNOE, sNWE, sA1, sD0;
+   
+   synchroniser sync_NE(aNE, clk, sNE);
+   synchroniser sync_NOE(aNOE, clk, sNOE);
+   synchroniser sync_NWE(aNWE, clk, sNWE);
+   synchroniser sync_A1(aA1, clk, sA1);
+   synchroniser sync_D0(aD0, clk, sD0);
+
+   always @(*) begin
+      if (~sNE & sNOE & ~sNWE) begin
+	 do_write <= 1'b1;
+	 w_adr <= sA1;
+	 w_data <= sD0;
+      end else begin
+	 do_write <= 1'b0;
+	 w_adr <= 1'b0;
+	 w_data <= 1'b0;
+      end
+   end // always @ (*)
+
+   assign testout = sNE;
+endmodule // simple_write_bus_slave
+
+
+module writable_regs(input do_write, w_adr, w_data, clk,
+		     output v1, v2);
+   reg vreg1, vreg2;
+
+   always @(posedge clk) begin
+      if (do_write) begin
+	 case (w_adr)
+	   1'b0: vreg1 <= w_data;
+	   1'b1: vreg2 <= w_data;
+	 endcase // case (w_adr)
+      end
+   end
+   assign v1 = vreg1;
+   assign v2 = vreg2;
+endmodule // writable_regs
    
 
 module top (
-	input  crystal_clk,
-	input STM32_PIN,  
+	input crystal_clk,
+	input STM32_PIN,
+	input aNE, aNOE, aNWE, aA1, aD0,
 	output LED0, output LED1, output LED2, output LED3,
-	output LED4, output LED5, output LED6, output LED7,
-	output TESTPIN
+	output LED4, output LED5, output LED6, output LED7
 );
 
    wire clk;
    wire nrst, lock;
    wire [7:0] leddata;
+   wire do_write, w_adr, w_data;
+   wire leddata1, leddata2;
+   wire testout;
 
    assign nrst = 1'b1;
    pllclk my_pll(crystal_clk, clk, nrst, lock);
-   count_pulses_on_leds my_ledshow(STM32_PIN, clk, leddata);
+   count_pulses_on_leds my_ledshow(/*STM32_PIN*/aNWE, clk, leddata);
+
+   simple_write_bus_slave my_bus_slave(aNE, aNOE, aNWE, aA1, aD0,
+				       clk,
+				       do_write, w_adr, w_data, testout);
+   writable_regs led_registers(do_write, w_adr, w_data, clk, leddata1, leddata2);
    
-   assign {LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7} = leddata;
+   assign {LED0, LED1, LED2, LED3, LED4} = leddata[4:0];
+   assign LED5 = 1'b0;
+   assign LED6 = leddata1;
+   assign LED7 = leddata2;
 endmodule
