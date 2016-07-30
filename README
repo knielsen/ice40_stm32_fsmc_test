@@ -1,0 +1,13 @@
+Small test of fast communication between STM32F4 and ICE40 using the STM32 FSMC.
+
+Pinout for the FSMC:
+
+  func  STM32  ICE40
+  A0    PF0    E14
+  D0	PD14   F15
+  NE2	PG9    G15
+  NOE	PD4    H14
+  NWE	PD5    F14
+
+The external clock for the ICE40 is on J3. A test pin PF11 on the
+STM32F4 is connected to P16 on the ICE40.
