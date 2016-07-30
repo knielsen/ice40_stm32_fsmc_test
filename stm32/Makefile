@@ -34,6 +34,7 @@ SRCS  += system_stm32f4xx.c
 SRCS  += stm32f4xx_rcc.c 
 SRCS  += stm32f4xx_gpio.c
 SRCS  += stm32f4xx_usart.c
+SRCS  += stm32f4xx_fsmc.c
 SRCS  += misc.c
 
 # Startup file written by ST

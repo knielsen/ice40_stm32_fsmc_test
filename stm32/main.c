@@ -126,6 +126,19 @@ serial_output_hexbyte(USART_TypeDef* USARTx, uint8_t byte)
 
 __attribute__ ((unused))
 static void
+serial_output_hex(USART_TypeDef* USARTx, uint32_t v)
+{
+  serial_putchar(USARTx, '0');
+  serial_putchar(USARTx, 'x');
+  serial_output_hexbyte(USARTx, v >> 24);
+  serial_output_hexbyte(USARTx, (v >> 16) & 0xff);
+  serial_output_hexbyte(USARTx, (v >> 8) & 0xff);
+  serial_output_hexbyte(USARTx, v & 0xff);
+}
+
+
+__attribute__ ((unused))
+static void
 println_uint32(USART_TypeDef* usart, uint32_t val)
 {
   char buf[13];
@@ -411,6 +424,142 @@ fpga_test(void)
 }
 
 
+static void
+fsmc_manual_init(void)
+{
+  FSMC_NORSRAMInitTypeDef fsmc_init;
+  FSMC_NORSRAMTimingInitTypeDef timing, alttiming;
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  /* GPIOD, E, F, and G clock enable */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_4|GPIO_Pin_5|
+    GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_10|GPIO_Pin_11|
+    GPIO_Pin_12|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource0, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource1, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource4, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource5, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource7, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource10, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource11, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource14, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource15, GPIO_AF_FSMC);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_3|GPIO_Pin_4|
+    GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_10|GPIO_Pin_11|
+    GPIO_Pin_12|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOE, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource0, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource1, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource3, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource4, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource7, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource8, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource9, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource10, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource11, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource12, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource13, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource14, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE, GPIO_PinSource15, GPIO_AF_FSMC);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|
+    GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_12|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOF, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource0, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource1, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource2, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource3, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource4, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource5, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource12, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource13, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource14, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOF, GPIO_PinSource15, GPIO_AF_FSMC);
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|
+    GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_9;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOG, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource0, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource1, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource2, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource3, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource4, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource5, GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOG, GPIO_PinSource9, GPIO_AF_FSMC);
+
+  RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC, ENABLE);
+  FSMC_NORSRAMDeInit(FSMC_Bank1_NORSRAM1);
+  FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, DISABLE);
+  FSMC_NORSRAMDeInit(FSMC_Bank1_NORSRAM2);
+
+  fsmc_init.FSMC_Bank = FSMC_Bank1_NORSRAM1;
+  fsmc_init.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;
+  fsmc_init.FSMC_MemoryType = FSMC_MemoryType_SRAM;
+  fsmc_init.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
+  fsmc_init.FSMC_BurstAccessMode = FSMC_BurstAccessMode_Disable;
+  fsmc_init.FSMC_AsynchronousWait = FSMC_AsynchronousWait_Disable;
+  fsmc_init.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
+  fsmc_init.FSMC_WrapMode = FSMC_WrapMode_Disable;
+  fsmc_init.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
+  fsmc_init.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
+  fsmc_init.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
+  fsmc_init.FSMC_ExtendedMode = FSMC_ExtendedMode_Disable;
+  fsmc_init.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
+  fsmc_init.FSMC_ReadWriteTimingStruct = &timing;
+  fsmc_init.FSMC_WriteTimingStruct = &alttiming;
+
+  timing.FSMC_AddressSetupTime = 3;
+  timing.FSMC_AddressHoldTime = 0xf;
+  timing.FSMC_DataSetupTime = 6;
+  timing.FSMC_BusTurnAroundDuration = 1;
+  timing.FSMC_CLKDivision = 0xf;
+  timing.FSMC_DataLatency = 0xf;
+  timing.FSMC_AccessMode = FSMC_AccessMode_A;
+
+  alttiming.FSMC_AddressSetupTime = 0xf;
+  alttiming.FSMC_AddressHoldTime = 0xf;
+  alttiming.FSMC_DataSetupTime = 0xff;
+  alttiming.FSMC_BusTurnAroundDuration = 0xf;
+  alttiming.FSMC_CLKDivision = 0xf;
+  alttiming.FSMC_DataLatency = 0xf;
+  alttiming.FSMC_AccessMode = FSMC_AccessMode_A;
+
+  FSMC_NORSRAMInit(&fsmc_init);
+  fsmc_init.FSMC_Bank = FSMC_Bank1_NORSRAM2;
+  FSMC_NORSRAMInit(&fsmc_init);
+
+  FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
+  FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM2, ENABLE);
+}
+
+
 int main(void)
 {
   delay(2000000);
@@ -418,6 +567,7 @@ int main(void)
   setup_led();
   serial_puts(USART2, "Initialising...\r\n");
   delay(2000000);
+  fsmc_manual_init();
 
   serial_puts(USART2, "Hello world, ready to blink!\r\n");
 

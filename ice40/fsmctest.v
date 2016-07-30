@@ -97,8 +97,7 @@ module simple_write_bus_slave(input aNE, aNOE, aNWE, aA1, aD0,
 			      input clk,
 			      output reg do_write,
 			      output reg w_adr,
-			      output reg w_data
-			      ,output reg testout);
+			      output reg w_data);
    // Synchronised inputs.
    wire sNE, sNOE, sNWE, sA1, sD0;
    
@@ -119,8 +118,6 @@ module simple_write_bus_slave(input aNE, aNOE, aNWE, aA1, aD0,
 	 w_data <= 1'b0;
       end
    end // always @ (*)
-
-   assign testout = sNE;
 endmodule // simple_write_bus_slave
 
 
@@ -154,7 +151,6 @@ module top (
    wire [7:0] leddata;
    wire do_write, w_adr, w_data;
    wire leddata1, leddata2;
-   wire testout;
 
    assign nrst = 1'b1;
    pllclk my_pll(crystal_clk, clk, nrst, lock);
@@ -162,7 +158,7 @@ module top (
 
    simple_write_bus_slave my_bus_slave(aNE, aNOE, aNWE, aA1, aD0,
 				       clk,
-				       do_write, w_adr, w_data, testout);
+				       do_write, w_adr, w_data);
    writable_regs led_registers(do_write, w_adr, w_data, clk, leddata1, leddata2);
    
    assign {LED0, LED1, LED2, LED3, LED4} = leddata[4:0];

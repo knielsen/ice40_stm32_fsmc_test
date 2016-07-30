@@ -447,9 +447,21 @@ void SystemInit_ExtMemCtl(void)
  | PD15 <-> FSMC_D1  | PE14 <-> FSMC_D11  |
  |                   | PE15 <-> FSMC_D12  |
  +-------------------+--------------------+
+
+ Also: PD7 <-> FSMC_NE1.
+
+ Not configured: PE2 (A23), PE5 (A21), PE6 (A22), PF6(NIORD), PF7(NREG),
+ PF8(NIOWR), PF9(CD), PF10(INTR), PG6(INT2), PG7(INT3), PD3(CLK), PD6(NWAIT),
+ PG10(NE3), PG11(NCE4_2), PG12(NE4), PG13(A24), PG14(A25), PB7(NADV).
 */
    /* Enable GPIOD, GPIOE, GPIOF and GPIOG interface clock */
   RCC->AHB1ENR   = 0x00000078;
+  /* Need a small delay for GPIOD enable to take effect. */
+  {
+    uint32_t delay = 10;
+    while (delay--)
+      __asm volatile("nop");
+  }
   
   /* Connect PDx pins to FSMC Alternate function */
   GPIOD->AFR[0]  = 0xc0cc00cc;
@@ -507,7 +519,7 @@ void SystemInit_ExtMemCtl(void)
   FSMC_Bank1->BTCR[0]  &= ((uint32_t)0x000FFFFE);
 
   /* Configure and enable Bank1_SRAM1 */
-  FSMC_Bank1->BTCR[0]  = 0x00001010;
+  FSMC_Bank1->BTCR[0]  = 0x00001090;
   FSMC_Bank1->BTCR[1]  = 0x00010603;
   //FSMC_Bank1->BTCR[1]  = 0x00050f07;
   FSMC_Bank1E->BWTR[0] = 0x0fffffff;
@@ -517,7 +529,7 @@ void SystemInit_ExtMemCtl(void)
 
   /* Enable FSMC bank 1 SRAM 2. */
   FSMC_Bank1->BTCR[2]  &= ((uint32_t)0x000FFFFE);
-  FSMC_Bank1->BTCR[2]  = 0x00001010;
+  FSMC_Bank1->BTCR[2]  = 0x00001090;
   FSMC_Bank1->BTCR[3]  = 0x00010603;
   FSMC_Bank1E->BWTR[2] = 0x0fffffff;
   /* Enable it. */

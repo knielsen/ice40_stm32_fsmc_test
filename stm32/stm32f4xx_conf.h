@@ -23,8 +23,6 @@
 #ifndef __STM32F4xx_CONF_H
 #define __STM32F4xx_CONF_H
 
-#define DATA_IN_ExtSRAM 1
-
 #if defined  (HSE_VALUE)
 /* Redefine the HSE value; it's equal to 8 MHz on the STM32F4-DISCOVERY Kit */
  #undef HSE_VALUE
