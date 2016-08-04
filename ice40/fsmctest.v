@@ -127,7 +127,7 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
    input 		 clk,
    output wire 		 rw_adr,
    output reg 		 do_read, input wire[DATW-1:0] read_data,
-   output reg 		 do_write, output reg w_data,
+   output reg 		 do_write, output reg[DATW-1:0] w_data,
    output 		 io_output, output wire[DATW-1:0] io_data);
 
    wire sNE, sNOE, sNWE;
@@ -204,9 +204,10 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
 endmodule // clocked_bus_slave
 
 
-module writable_regs(input do_write, w_adr, w_data, clk,
-		     output v1, v2);
-   reg vreg1, vreg2;
+module writable_regs(input do_write, w_adr, input wire[2:0] w_data, input clk,
+		     output wire[2:0] v1, output wire[2:0] v2);
+   reg[2:0] vreg1;
+   reg[2:0] vreg2;
 
    always @(posedge clk) begin
       if (do_write) begin
@@ -225,7 +226,7 @@ module top (
 	input crystal_clk,
 	input STM32_PIN,
 	input aNE, aNOE, aNWE, aA1,
-	inout aD0,
+	inout aD0, aD1, aD2,
 	output LED0, output LED1, output LED2, output LED3,
 	output LED4, output LED5, output LED6, output LED7,
 	input uart_tx_in, output uart_tx_out
@@ -234,17 +235,21 @@ module top (
    wire clk;
    wire nrst, lock;
    wire [7:0] leddata;
-   wire aD0_output, aD0_input, io_d_output;
-   wire do_write, rw_adr, w_data;
-   wire do_read, register_data;
-   wire leddata1, leddata2;
+   wire[2:0] aDn_output;
+   wire[2:0] aDn_input;
+   wire io_d_output;
+   wire do_write, rw_adr;
+   wire[2:0] w_data;
+   wire do_read;
+   wire[2:0] register_data;
+   wire[2:0] leddata1, leddata2;
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
-     io_d0(.PACKAGE_PIN(aD0),
+     io_Dn[2:0](.PACKAGE_PIN({aD2, aD1, aD0}),
 	   .OUTPUT_ENABLE(io_d_output),
-	   .D_OUT_0(aD0_output),
-	   .D_IN_0(aD0_input)
+	   .D_OUT_0(aDn_output),
+	   .D_IN_0(aDn_input)
 	   );
 
    assign nrst = 1'b1;
@@ -256,13 +261,13 @@ module top (
 				       clk,
 				       do_write, w_adr, w_data);
 */
-   clocked_bus_slave #(.ADRW(1), .DATW(1))
+   clocked_bus_slave #(.ADRW(1), .DATW(3))
      my_bus_slave(aNE, aNOE, aNWE,
-		  aA1, aD0_input,
+		  aA1, aDn_input,
 		  clk, rw_adr,
 		  do_read, register_data,
 		  do_write, w_data,
-		  io_d_output, aD0_output);
+		  io_d_output, aDn_output);
 
    writable_regs led_registers(do_write, rw_adr, w_data, clk, leddata1, leddata2);
    /* The clocked_bus_slave asserts do_read once per read transaction on the
@@ -282,8 +287,7 @@ module top (
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
    
-   assign {LED0, LED1, LED2, LED3, LED4} = leddata[4:0];
-   assign LED5 = 1'b0;
-   assign LED6 = leddata1;
-   assign LED7 = leddata2;
+   assign {LED0, LED1} = leddata[2:1];
+   assign {LED2, LED3, LED4} = leddata1;
+   assign {LED5, LED6, LED7} = leddata2;
 endmodule

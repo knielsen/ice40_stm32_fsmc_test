@@ -407,8 +407,8 @@ static void
 fpga_test(void)
 {
   led_on();
-  write_fpga(0, 1);
-  write_fpga(2, 1);
+  write_fpga(0, 0b111);
+  write_fpga(2, 0b111);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
@@ -417,8 +417,8 @@ fpga_test(void)
 
   delay(MCU_HZ/3);
   led_off();
-  write_fpga(0, 0);
-  write_fpga(2, 0);
+  write_fpga(0, 0b000);
+  write_fpga(2, 0b000);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
@@ -427,8 +427,8 @@ fpga_test(void)
 
   delay(MCU_HZ/3);
   led_on();
-  write_fpga(0, 1);
-  write_fpga(2, 0);
+  write_fpga(0, 0b101);
+  write_fpga(2, 0b010);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
@@ -437,8 +437,8 @@ fpga_test(void)
 
   delay(MCU_HZ/3);
   led_off();
-  write_fpga(0, 0);
-  write_fpga(2, 1);
+  write_fpga(0, 0b010);
+  write_fpga(2, 0b101);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
@@ -447,8 +447,8 @@ fpga_test(void)
 
   delay(MCU_HZ/3);
   led_on();
-  write_fpga(0, 0);
-  write_fpga(2, 0);
+  write_fpga(0, 0b110);
+  write_fpga(2, 0b011);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
@@ -457,8 +457,8 @@ fpga_test(void)
 
   delay(MCU_HZ/3);
   led_off();
-  write_fpga(0, 1);
-  write_fpga(2, 1);
+  write_fpga(0, 0b111);
+  write_fpga(2, 0b111);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
@@ -583,7 +583,7 @@ fsmc_manual_init(void)
 
   timing.FSMC_AddressSetupTime = 0;
   timing.FSMC_AddressHoldTime = 0xf;
-  timing.FSMC_DataSetupTime = 7;
+  timing.FSMC_DataSetupTime = 9;
   timing.FSMC_BusTurnAroundDuration = 0;
   timing.FSMC_CLKDivision = 0xf;
   timing.FSMC_DataLatency = 0xf;
