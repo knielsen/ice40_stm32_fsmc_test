@@ -12,6 +12,7 @@ set_io aNE G15
 set_io aNOE H14
 set_io aNWE F14
 set_io aA1 E14
+set_io aA2 H16
 set_io aD0 F15
 set_io aD1 F16
 set_io aD2 G16

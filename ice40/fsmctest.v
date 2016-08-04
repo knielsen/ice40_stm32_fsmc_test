@@ -1,5 +1,5 @@
 parameter DW = 3;
-parameter AW = 1;
+parameter AW = 2;
 
 module pllclk (input ext_clock, output pll_clock, input nrst, output lock);
    wire dummy_out1, dummy_out2, int_clk;
@@ -128,7 +128,7 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
   (input aNE, aNOE, aNWE,
    input wire [ADRW-1:0] aAn, input wire[DATW-1:0] aDn,
    input 		 clk,
-   output wire 		 rw_adr,
+   output wire[ADRW-1:0] rw_adr,
    output reg 		 do_read, input wire[DATW-1:0] read_data,
    output reg 		 do_write, output reg[DATW-1:0] w_data,
    output 		 io_output, output wire[DATW-1:0] io_data);
@@ -207,7 +207,8 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
 endmodule // clocked_bus_slave
 
 
-module writable_regs(input do_write, w_adr, input wire[DW-1:0] w_data, input clk,
+module writable_regs(input do_write, input wire[AW-1:0] w_adr,
+		     input wire[DW-1:0] w_data, input clk,
 		     output wire[DW-1:0] v1, output wire[DW-1:0] v2);
    reg[DW-1:0] vreg1;
    reg[DW-1:0] vreg2;
@@ -228,7 +229,8 @@ endmodule // writable_regs
 module top (
 	input crystal_clk,
 	input STM32_PIN,
-	input aNE, aNOE, aNWE, aA1,
+	input aNE, aNOE, aNWE,
+	input aA1, aA2,
 	inout aD0, aD1, aD2,
 	output LED0, output LED1, output LED2, output LED3,
 	output LED4, output LED5, output LED6, output LED7,
@@ -241,7 +243,8 @@ module top (
    wire[DW-1:0] aDn_output;
    wire[DW-1:0] aDn_input;
    wire io_d_output;
-   wire do_write, rw_adr;
+   wire do_write;
+   wire[AW-1:0] rw_adr;
    wire[DW-1:0] w_data;
    wire do_read;
    wire[DW-1:0] register_data;
@@ -264,9 +267,9 @@ module top (
 				       clk,
 				       do_write, w_adr, w_data);
 */
-   clocked_bus_slave #(.ADRW(1), .DATW(DW))
+   clocked_bus_slave #(.ADRW(AW), .DATW(DW))
      my_bus_slave(aNE, aNOE, aNWE,
-		  aA1, aDn_input,
+		  {aA2, aA1}, aDn_input,
 		  clk, rw_adr,
 		  do_read, register_data,
 		  do_write, w_data,
@@ -283,6 +286,8 @@ module top (
       case (rw_adr)
 	1'b0: register_data <= leddata1;
 	1'b1: register_data <= leddata2;
+	2'b10: register_data <= 3'b100;
+	2'b11: register_data <= 3'b011;
 	default: register_data <= 0;
       endcase // case (rw_adr)
    end

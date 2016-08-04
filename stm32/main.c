@@ -409,10 +409,16 @@ fpga_test(void)
   led_on();
   write_fpga(0, 0b111);
   write_fpga(2, 0b111);
+  write_fpga(4, 0b000);
+  write_fpga(6, 0b000);
   serial_puts(USART2, "Read back: ");
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
   serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(4));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(6));
   serial_puts(USART2, "\n");
 
   delay(MCU_HZ/3);
@@ -463,6 +469,10 @@ fpga_test(void)
   serial_output_hex(USART2, read_fpga(0));
   serial_puts(USART2, " ");
   serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(4));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(6));
   serial_puts(USART2, "\n");
 
   for (;;)

@@ -4,6 +4,7 @@ Pinout for the FSMC:
 
   func  STM32  ICE40
   A0    PF0    E14
+  A1    PF1    H16
   D0	PD14   F15
   D1	PD15   F16
   D2	PD0    G16
