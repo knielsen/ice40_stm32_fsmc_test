@@ -1,3 +1,6 @@
+parameter DW = 3;
+parameter AW = 1;
+
 module pllclk (input ext_clock, output pll_clock, input nrst, output lock);
    wire dummy_out1, dummy_out2, int_clk;
    wire bypass, lock1;
@@ -204,10 +207,10 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
 endmodule // clocked_bus_slave
 
 
-module writable_regs(input do_write, w_adr, input wire[2:0] w_data, input clk,
-		     output wire[2:0] v1, output wire[2:0] v2);
-   reg[2:0] vreg1;
-   reg[2:0] vreg2;
+module writable_regs(input do_write, w_adr, input wire[DW-1:0] w_data, input clk,
+		     output wire[DW-1:0] v1, output wire[DW-1:0] v2);
+   reg[DW-1:0] vreg1;
+   reg[DW-1:0] vreg2;
 
    always @(posedge clk) begin
       if (do_write) begin
@@ -235,18 +238,18 @@ module top (
    wire clk;
    wire nrst, lock;
    wire [7:0] leddata;
-   wire[2:0] aDn_output;
-   wire[2:0] aDn_input;
+   wire[DW-1:0] aDn_output;
+   wire[DW-1:0] aDn_input;
    wire io_d_output;
    wire do_write, rw_adr;
-   wire[2:0] w_data;
+   wire[DW-1:0] w_data;
    wire do_read;
-   wire[2:0] register_data;
-   wire[2:0] leddata1, leddata2;
+   wire[DW-1:0] register_data;
+   wire[DW-1:0] leddata1, leddata2;
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
-     io_Dn[2:0](.PACKAGE_PIN({aD2, aD1, aD0}),
+     io_Dn[DW-1:0](.PACKAGE_PIN({aD2, aD1, aD0}),
 	   .OUTPUT_ENABLE(io_d_output),
 	   .D_OUT_0(aDn_output),
 	   .D_IN_0(aDn_input)
@@ -261,7 +264,7 @@ module top (
 				       clk,
 				       do_write, w_adr, w_data);
 */
-   clocked_bus_slave #(.ADRW(1), .DATW(3))
+   clocked_bus_slave #(.ADRW(1), .DATW(DW))
      my_bus_slave(aNE, aNOE, aNWE,
 		  aA1, aDn_input,
 		  clk, rw_adr,
