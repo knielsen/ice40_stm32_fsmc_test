@@ -583,13 +583,13 @@ pb15
 Text Label 2100 1950 0    20   ~ 0
 pb14
 Text Label 2100 1900 0    20   ~ 0
-fpga_io2
+pb13
 Text Label 2100 1850 0    20   ~ 0
-fpga_io1
+pb12
 Text Label 2100 1800 0    20   ~ 0
-pb11
+fpga_io2
 Text Label 2100 1750 0    20   ~ 0
-pb10
+fpga_io1
 Text Label 2100 1700 0    20   ~ 0
 pb9
 Text Label 2100 1650 0    20   ~ 0
@@ -1912,8 +1912,6 @@ NoConn ~ 900  1550
 NoConn ~ 900  1600
 NoConn ~ 2250 1250
 NoConn ~ 2250 1300
-NoConn ~ 2250 1750
-NoConn ~ 2250 1800
 NoConn ~ 2250 1950
 NoConn ~ 2250 2000
 NoConn ~ 900  2100
@@ -1986,4 +1984,6 @@ F 3 "" H 9400 5750 50  0000 C CNN
 	1    9400 5750
 	-1   0    0    1   
 $EndComp
+NoConn ~ 2250 1850
+NoConn ~ 2250 1900
 $EndSCHEMATC
