@@ -13,3 +13,5 @@ set_io aNOE H14
 set_io aNWE F14
 set_io aA1 E14
 set_io aD0 F15
+set_io uart_tx_in J14
+set_io uart_tx_out B12

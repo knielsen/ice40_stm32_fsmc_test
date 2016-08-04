@@ -227,7 +227,8 @@ module top (
 	input aNE, aNOE, aNWE, aA1,
 	inout aD0,
 	output LED0, output LED1, output LED2, output LED3,
-	output LED4, output LED5, output LED6, output LED7
+	output LED4, output LED5, output LED6, output LED7,
+	input uart_tx_in, output uart_tx_out
 );
 
    wire clk;
@@ -278,6 +279,8 @@ module top (
       endcase // case (rw_adr)
    end
 
+   /* For debugging, proxy an UART Tx signal to the FTDI chip. */
+   assign uart_tx_out = uart_tx_in;
    
    assign {LED0, LED1, LED2, LED3, LED4} = leddata[4:0];
    assign LED5 = 1'b0;
