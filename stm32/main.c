@@ -358,6 +358,17 @@ write_fpga(uint32_t offset, uint16_t val)
 
 
 __attribute__((unused))
+static uint16_t
+read_fpga(uint32_t offset)
+{
+  /* 0x64000000 is the start of bank1 SRAM2. */
+  volatile uint16_t *fpga = (volatile uint16_t *)(uint32_t)0x64000000;
+
+  return *(fpga+(offset>>1));
+}
+
+
+__attribute__((unused))
 static void
 pulse_pin_test(void)
 {
@@ -398,26 +409,61 @@ fpga_test(void)
   led_on();
   write_fpga(0, 1);
   write_fpga(2, 1);
+  serial_puts(USART2, "Read back: ");
+  serial_output_hex(USART2, read_fpga(0));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, "\n");
+
   delay(MCU_HZ/3);
   led_off();
   write_fpga(0, 0);
   write_fpga(2, 0);
+  serial_puts(USART2, "Read back: ");
+  serial_output_hex(USART2, read_fpga(0));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, "\n");
+
   delay(MCU_HZ/3);
   led_on();
   write_fpga(0, 1);
   write_fpga(2, 0);
+  serial_puts(USART2, "Read back: ");
+  serial_output_hex(USART2, read_fpga(0));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, "\n");
+
   delay(MCU_HZ/3);
   led_off();
   write_fpga(0, 0);
   write_fpga(2, 1);
+  serial_puts(USART2, "Read back: ");
+  serial_output_hex(USART2, read_fpga(0));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, "\n");
+
   delay(MCU_HZ/3);
   led_on();
   write_fpga(0, 0);
   write_fpga(2, 0);
+  serial_puts(USART2, "Read back: ");
+  serial_output_hex(USART2, read_fpga(0));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, "\n");
+
   delay(MCU_HZ/3);
   led_off();
   write_fpga(0, 1);
   write_fpga(2, 1);
+  serial_puts(USART2, "Read back: ");
+  serial_output_hex(USART2, read_fpga(0));
+  serial_puts(USART2, " ");
+  serial_output_hex(USART2, read_fpga(2));
+  serial_puts(USART2, "\n");
 
   for (;;)
     ;
@@ -535,10 +581,10 @@ fsmc_manual_init(void)
   fsmc_init.FSMC_ReadWriteTimingStruct = &timing;
   fsmc_init.FSMC_WriteTimingStruct = &alttiming;
 
-  timing.FSMC_AddressSetupTime = 3;
+  timing.FSMC_AddressSetupTime = 0;
   timing.FSMC_AddressHoldTime = 0xf;
-  timing.FSMC_DataSetupTime = 6;
-  timing.FSMC_BusTurnAroundDuration = 1;
+  timing.FSMC_DataSetupTime = 7;
+  timing.FSMC_BusTurnAroundDuration = 0;
   timing.FSMC_CLKDivision = 0xf;
   timing.FSMC_DataLatency = 0xf;
   timing.FSMC_AccessMode = FSMC_AccessMode_A;
