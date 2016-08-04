@@ -530,7 +530,7 @@ fsmc_manual_init(void)
   fsmc_init.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
   fsmc_init.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
   fsmc_init.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
-  fsmc_init.FSMC_ExtendedMode = FSMC_ExtendedMode_Disable;
+  fsmc_init.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable;
   fsmc_init.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
   fsmc_init.FSMC_ReadWriteTimingStruct = &timing;
   fsmc_init.FSMC_WriteTimingStruct = &alttiming;
@@ -543,10 +543,10 @@ fsmc_manual_init(void)
   timing.FSMC_DataLatency = 0xf;
   timing.FSMC_AccessMode = FSMC_AccessMode_A;
 
-  alttiming.FSMC_AddressSetupTime = 0xf;
+  alttiming.FSMC_AddressSetupTime = 3;
   alttiming.FSMC_AddressHoldTime = 0xf;
-  alttiming.FSMC_DataSetupTime = 0xff;
-  alttiming.FSMC_BusTurnAroundDuration = 0xf;
+  alttiming.FSMC_DataSetupTime = 6;
+  alttiming.FSMC_BusTurnAroundDuration = 1;
   alttiming.FSMC_CLKDivision = 0xf;
   alttiming.FSMC_DataLatency = 0xf;
   alttiming.FSMC_AccessMode = FSMC_AccessMode_A;
