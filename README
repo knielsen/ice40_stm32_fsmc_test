@@ -13,4 +13,6 @@ Pinout for the FSMC:
   NWE	PD5    F14
 
 The external clock for the ICE40 is on J3. A test pin PF11 on the
-STM32F4 is connected to P16 on the ICE40.
+STM32F4 is connected to P16 on the ICE40. A serial Tx out from STM32
+can be connected from PA2 on the STM32F4 board to J14 on the ICE40
+(will be proxied to the FTDI on the ICE40 breakout board).
