@@ -178,12 +178,7 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
    assign next_wDn = st_idle & ~sNE & ~sNWE ? aDn : wDn;
    // Trigger a register write when NWE goes low.
    assign next_do_write = st_idle & ~sNE & ~sNWE;
-   /* Remain (wait) in write mode until NE and NWE are both de-asserted. This
-      wait helps avoid glitches on the address. If transactions would be spaced
-      closely back-to-back, we might miss a short NE high-pulse, but timing
-      constraints should ensure that we will not miss the high pulse on NEW.
-    */
-   assign next_st_write = (st_idle | st_write) & (~sNE | ~sNWE);
+   assign next_st_write = (st_idle | st_write) & (~sNE & ~sNWE);
 
    /* Incoming read. */
    assign next_do_read = st_idle & ~sNE & ~sNOE;
