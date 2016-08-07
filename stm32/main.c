@@ -138,11 +138,9 @@ serial_output_hex(USART_TypeDef* USARTx, uint32_t v)
 
 
 __attribute__ ((unused))
-static void
-println_uint32(USART_TypeDef* usart, uint32_t val)
+static char *
+tostring_uint32(char *p, uint32_t val)
 {
-  char buf[13];
-  char *p = buf;
   uint32_t l, d;
 
   l = 1000000000UL;
@@ -156,7 +154,30 @@ println_uint32(USART_TypeDef* usart, uint32_t val)
     val -= d*l;
     l /= 10;
   } while (l > 0);
+  return p;
+}
 
+
+static void
+print_uint32(USART_TypeDef* usart, uint32_t val)
+{
+  char buf[13];
+  char *p;
+
+  p = tostring_uint32(buf, val);
+  *p = '\0';
+  serial_puts(usart, buf);
+}
+
+
+__attribute__ ((unused))
+static void
+println_uint32(USART_TypeDef* usart, uint32_t val)
+{
+  char buf[13];
+  char *p = buf;
+
+  p = tostring_uint32(buf, val);
   *p++ = '\r';
   *p++ = '\n';
   *p = '\0';
@@ -406,6 +427,7 @@ __attribute__((unused))
 static void
 fpga_test(void)
 {
+again:
   led_on();
   write_fpga(0, 0b111);
   write_fpga(2, 0b111);
@@ -474,9 +496,80 @@ fpga_test(void)
   serial_puts(USART2, " ");
   serial_output_hex(USART2, read_fpga(6));
   serial_puts(USART2, "\n");
-
+goto again;
   for (;;)
     ;
+}
+
+
+__attribute__((unused))
+static void
+test_fsmc_reliability(void)
+{
+  uint16_t i0, i1, i2, i3, o0, o1, o2, o3;
+  uint64_t iterations;
+  uint32_t errors;
+  uint32_t ledstate;
+
+  i0 = i1 = i2 = i3 = 0;
+  iterations = 0;
+  errors = 0;
+  ledstate = 0;
+  for (;;) {
+    write_fpga(0, i0);
+    o0 = read_fpga(0) & 0x7;
+    write_fpga(2, i1);
+    write_fpga(4, i2);
+    write_fpga(6, i3);
+    o1 = read_fpga(2) & 0x7;
+    o2 = read_fpga(4) & 0x7;
+    o3 = read_fpga(6) & 0x7;
+
+    if (errors < 10) {
+      if (o0 != i0) {
+        serial_puts(USART2, "Diff 0: ");
+        print_uint32(USART2, i0);
+        serial_puts(USART2, " != ");
+        println_uint32(USART2, o0);
+      }
+      if (o1 != i1) {
+        serial_puts(USART2, "Diff 1: ");
+        print_uint32(USART2, i1);
+        serial_puts(USART2, " != ");
+        println_uint32(USART2, o1);
+      }
+      if (o2 != i2) {
+        serial_puts(USART2, "Diff 2: ");
+        print_uint32(USART2, i2);
+        serial_puts(USART2, " != ");
+        println_uint32(USART2, o2);
+      }
+      if (o3 != i3) {
+        serial_puts(USART2, "Diff 3: ");
+        print_uint32(USART2, i3);
+        serial_puts(USART2, " != ");
+        println_uint32(USART2, o3);
+      }
+    }
+
+    errors += (o0 != i0) + (o1 != i1) + (o2 != i2) + (o3 != i3);
+    i0 = (i0+1) & 0x7;
+    i1 = (i1+3) & 0x7;
+    i2 = (i2+6) & 0x7;
+    i3 = (i3+7) & 0x7;
+
+    ++iterations;
+    if ((iterations & ((1<<22)-1)) == 0) {
+      serial_puts(USART2, "Errors: ");
+      print_uint32(USART2, errors);
+      serial_puts(USART2, ", pct: ");
+      println_float(USART2, (float)errors/(float)iterations*(100/4), 2, 5);
+      if ((ledstate = !ledstate))
+        led_on();
+      else
+        led_off();
+    }
+  }
 }
 
 
@@ -631,7 +724,8 @@ int main(void)
 
   //mem_test();
   //pulse_pin_test();
-  fpga_test();
+  //fpga_test();
+  test_fsmc_reliability();
 
   return 0;
 }

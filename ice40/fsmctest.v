@@ -204,20 +204,23 @@ endmodule // clocked_bus_slave
 
 module writable_regs(input do_write, input wire[AW-1:0] w_adr,
 		     input wire[DW-1:0] w_data, input clk,
-		     output wire[DW-1:0] v1, output wire[DW-1:0] v2);
-   reg[DW-1:0] vreg1;
-   reg[DW-1:0] vreg2;
+		     output wire[DW-1:0] v0, v1, v2, v3);
+   reg[DW-1:0] vreg0, vreg1, vreg2, vreg3;
 
    always @(posedge clk) begin
       if (do_write) begin
 	 case (w_adr)
-	   1'b0: vreg1 <= w_data;
-	   1'b1: vreg2 <= w_data;
+	   2'b00: vreg0 <= w_data;
+	   2'b01: vreg1 <= w_data;
+	   2'b10: vreg2 <= w_data;
+	   2'b11: vreg3 <= w_data;
 	 endcase // case (w_adr)
       end
    end
+   assign v0 = vreg0;
    assign v1 = vreg1;
    assign v2 = vreg2;
+   assign v3 = vreg3;
 endmodule // writable_regs
    
 
@@ -234,7 +237,7 @@ module top (
 
    wire clk;
    wire nrst, lock;
-   wire [7:0] leddata;
+   wire [7:0] pulse_counter;
    wire[DW-1:0] aDn_output;
    wire[DW-1:0] aDn_input;
    wire io_d_output;
@@ -243,7 +246,7 @@ module top (
    wire[DW-1:0] w_data;
    wire do_read;
    wire[DW-1:0] register_data;
-   wire[DW-1:0] leddata1, leddata2;
+   wire[DW-1:0] leddata_n[4];
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
@@ -255,7 +258,7 @@ module top (
 
    assign nrst = 1'b1;
    pllclk my_pll(crystal_clk, clk, nrst, lock);
-   count_pulses_on_leds my_ledshow(/*STM32_PIN*/aNWE, clk, leddata);
+   count_pulses_on_leds my_ledshow(/*STM32_PIN*/aNWE, clk, pulse_counter);
 
 /*
    simple_write_bus_slave my_bus_slave(aNE, aNOE, aNWE, aA1, aD0,
@@ -270,7 +273,8 @@ module top (
 		  do_write, w_data,
 		  io_d_output, aDn_output);
 
-   writable_regs led_registers(do_write, rw_adr, w_data, clk, leddata1, leddata2);
+   writable_regs led_registers(do_write, rw_adr, w_data, clk,
+			       leddata_n[0], leddata_n[1], leddata_n[2], leddata_n[3]);
    /* The clocked_bus_slave asserts do_read once per read transaction on the
       external bus (synchronous on clk). This can be used to have side effects
       on read (eg. clear "data ready" on read of data register). However, in
@@ -279,10 +283,10 @@ module top (
     */
    always @(*) begin
       case (rw_adr)
-	1'b0: register_data <= leddata1;
-	1'b1: register_data <= leddata2;
-	2'b10: register_data <= 3'b100;
-	2'b11: register_data <= 3'b011;
+	2'b00: register_data <= leddata_n[0];
+	2'b01: register_data <= leddata_n[1];
+	2'b10: register_data <= leddata_n[2];
+	2'b11: register_data <= leddata_n[3];
 	default: register_data <= 0;
       endcase // case (rw_adr)
    end
@@ -290,7 +294,7 @@ module top (
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
    
-   assign {LED0, LED1} = leddata[2:1];
-   assign {LED2, LED3, LED4} = leddata1;
-   assign {LED5, LED6, LED7} = leddata2;
+   assign {LED0, LED1} = pulse_counter[2:1];
+   assign {LED2, LED3, LED4} = leddata_n[0];
+   assign {LED5, LED6, LED7} = leddata_n[1];
 endmodule
