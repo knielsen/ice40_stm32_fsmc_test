@@ -676,6 +676,27 @@ test_fsmc_3()
 }
 
 
+__attribute__((unused))
+static void
+test_fsmc_4()
+{
+  /*
+    Read-only test. ICE40 configured with counters that increase upon every
+    read access.
+  */
+
+  for (;;) {
+    serial_puts(USART2, "V0: "); println_uint32(USART2, read_fpga(0) & 0x7);
+    serial_puts(USART2, " 0: "); println_uint32(USART2, read_fpga(0) & 0x7);
+    serial_puts(USART2, "V1: "); println_uint32(USART2, read_fpga(2) & 0x7);
+    serial_puts(USART2, "V2: "); println_uint32(USART2, read_fpga(4) & 0x7);
+    serial_puts(USART2, "V3: "); println_uint32(USART2, read_fpga(6) & 0x7);
+
+    delay(MCU_HZ/3/2);
+  }
+}
+
+
 static void
 fsmc_manual_init(void)
 {
@@ -830,7 +851,8 @@ int main(void)
   //fpga_test();
   //test_fsmc_reliability();
   //test_fsmc_2();
-  test_fsmc_3();
+  //test_fsmc_3();
+  test_fsmc_4();
 
   return 0;
 }

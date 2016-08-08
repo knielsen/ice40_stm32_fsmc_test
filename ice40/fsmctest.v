@@ -246,7 +246,7 @@ module top (
    wire[DW-1:0] w_data;
    wire do_read;
    wire[DW-1:0] register_data;
-   wire[DW-1:0] leddata0, leddata1, leddata2, leddata3;
+   reg[DW-1:0] leddata0, leddata1, leddata2, leddata3;
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
@@ -273,8 +273,10 @@ module top (
 		  do_write, w_data,
 		  io_d_output, aDn_output);
 
+/*
    writable_regs led_registers(do_write, rw_adr, w_data, clk,
 			       leddata0, leddata1, leddata2, leddata3);
+*/
    /* The clocked_bus_slave asserts do_read once per read transaction on the
       external bus (synchronous on clk). This can be used to have side effects
       on read (eg. clear "data ready" on read of data register). However, in
@@ -289,6 +291,17 @@ module top (
 	2'b11: register_data <= leddata3;
 	default: register_data <= 0;
       endcase // case (rw_adr)
+   end
+
+   always @(posedge clk) begin
+      if (do_read) begin
+	 case (rw_adr)
+	   2'b00: leddata0 <= leddata0 + 1;
+	   2'b01: leddata1 <= leddata1 + 1;
+	   2'b10: leddata2 <= leddata2 + 1;
+	   2'b11: leddata3 <= leddata3 + 1;
+	 endcase // case (rw_adr)
+      end
    end
 
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
