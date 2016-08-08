@@ -246,7 +246,7 @@ module top (
    wire[DW-1:0] w_data;
    wire do_read;
    wire[DW-1:0] register_data;
-   wire[DW-1:0] leddata_n[4];
+   wire[DW-1:0] leddata0, leddata1, leddata2, leddata3;
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
@@ -274,7 +274,7 @@ module top (
 		  io_d_output, aDn_output);
 
    writable_regs led_registers(do_write, rw_adr, w_data, clk,
-			       leddata_n[0], leddata_n[1], leddata_n[2], leddata_n[3]);
+			       leddata0, leddata1, leddata2, leddata3);
    /* The clocked_bus_slave asserts do_read once per read transaction on the
       external bus (synchronous on clk). This can be used to have side effects
       on read (eg. clear "data ready" on read of data register). However, in
@@ -283,10 +283,10 @@ module top (
     */
    always @(*) begin
       case (rw_adr)
-	2'b00: register_data <= leddata_n[0];
-	2'b01: register_data <= leddata_n[1];
-	2'b10: register_data <= leddata_n[2];
-	2'b11: register_data <= leddata_n[3];
+	2'b00: register_data <= leddata0;
+	2'b01: register_data <= leddata1;
+	2'b10: register_data <= leddata2;
+	2'b11: register_data <= leddata3;
 	default: register_data <= 0;
       endcase // case (rw_adr)
    end
@@ -295,6 +295,6 @@ module top (
    assign uart_tx_out = uart_tx_in;
    
    assign {LED0, LED1} = pulse_counter[2:1];
-   assign {LED2, LED3, LED4} = leddata_n[0];
-   assign {LED5, LED6, LED7} = leddata_n[1];
+   assign {LED2, LED3, LED4} = leddata0;
+   assign {LED5, LED6, LED7} = leddata1;
 endmodule
