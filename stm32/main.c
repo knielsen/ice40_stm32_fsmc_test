@@ -23,8 +23,15 @@ int __errno;
 
 static void delay(uint32_t nCount)
 {
-  while(nCount--)
-    __asm volatile(""); // do nothing, should give 3 cycles/loop iteration.
+  /* This should be 3 cycles per iteration. nCount must be > 0. */
+  __asm volatile
+    ("\n"
+     "0:\n\t"
+     "subs %1, #1\n\t"
+     "bne.n 0b"
+     : "=r" (nCount)
+     : "0" (nCount)
+     : "cc");
 }
 
 
@@ -659,7 +666,7 @@ test_fsmc_3()
             ++errors;
           vin = (vin + I) & 7;
         }
-        serial_puts(USART2, errors == 0 ? "  " : (errors <= 5 ? " ." : " *"));
+        serial_puts(USART2, errors == 0 ? "  " : (errors <= 5 ? " ." : (errors <= 100 ? " ," :" *")));
       }
       serial_puts(USART2, "\r\n");
     }
