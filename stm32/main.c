@@ -560,7 +560,8 @@ test_fsmc_reliability(void)
 
     ++iterations;
     if ((iterations & ((1<<22)-1)) == 0) {
-      serial_puts(USART2, "Errors: ");
+      print_uint32(USART2, iterations >> 22);
+      serial_puts(USART2, "  Errors: ");
       print_uint32(USART2, errors);
       serial_puts(USART2, ", pct: ");
       println_float(USART2, (float)errors/(float)iterations*(100/4), 2, 5);
@@ -570,6 +571,101 @@ test_fsmc_reliability(void)
         led_off();
     }
   }
+}
+
+
+__attribute__((unused))
+static void
+test_fsmc_2(void)
+{
+  uint16_t i1, o1;
+  uint64_t iterations;
+  uint32_t errors;
+  uint32_t ledstate;
+
+  i1 = 3;
+  iterations = 0;
+  errors = 0;
+  ledstate = 0;
+  for (;;) {
+    write_fpga(2, i1);
+    o1 = read_fpga(2) & 0x7;
+
+    if (errors < 10) {
+      if (o1 != i1) {
+        serial_puts(USART2, "Diff 1: ");
+        print_uint32(USART2, i1);
+        serial_puts(USART2, " != ");
+        println_uint32(USART2, o1);
+      }
+    }
+
+    errors += (o1 != i1);
+    i1 = (i1+4) & 0x7;
+
+    ++iterations;
+    if ((iterations & ((1<<22)-1)) == 0) {
+      print_uint32(USART2, iterations >> 22);
+      serial_puts(USART2, "  Errors: ");
+      print_uint32(USART2, errors);
+      serial_puts(USART2, ", pct: ");
+      println_float(USART2, (float)errors/(float)iterations*(100/4), 2, 5);
+      if ((ledstate = !ledstate))
+        led_on();
+      else
+        led_off();
+    }
+  }
+}
+
+
+__attribute__((unused))
+static void
+test_fsmc_3()
+{
+  /*
+    Test write+read of all sequences S+n*I, n=0,1,2,...
+    Report a matrix of whether there were errors in 10k tries, and also mark
+    if there were more or less than 5 such errors.
+  */
+  uint32_t adr;
+
+  for (adr = 0; adr < 8; adr += 2) {
+    uint32_t S, I;
+
+    serial_puts(USART2, "Test matrix for addr=");
+    println_uint32(USART2, adr);
+    serial_puts(USART2, "S  \\  I");
+    for (I = 0; I < 8; ++I) {
+      serial_puts(USART2, " ");
+      print_uint32(USART2, I);
+    }
+    serial_puts(USART2, "\r\n");
+
+    for (S = 0; S < 8; ++S) {
+      print_uint32(USART2, S);
+      serial_puts(USART2, "      ");
+      for (I = 0; I < 8; ++I) {
+        uint32_t n;
+        uint32_t errors;
+        uint32_t vin = S;
+
+        errors = 0;
+        for (n = 0; n < 10000; ++n) {
+          uint16_t vout;
+          write_fpga(adr, vin);
+          vout = read_fpga(adr) & 7;
+          if (vout != vin)
+            ++errors;
+          vin = (vin + I) & 7;
+        }
+        serial_puts(USART2, errors == 0 ? "  " : (errors <= 5 ? " ." : " *"));
+      }
+      serial_puts(USART2, "\r\n");
+    }
+  }
+
+  for (;;);
 }
 
 
@@ -685,19 +781,19 @@ fsmc_manual_init(void)
   fsmc_init.FSMC_WriteTimingStruct = &alttiming;
 
   /* Read timing. */
-  timing.FSMC_AddressSetupTime = 0;
+  timing.FSMC_AddressSetupTime = 2;
   timing.FSMC_AddressHoldTime = 0xf;
-  timing.FSMC_DataSetupTime = 7;
-  timing.FSMC_BusTurnAroundDuration = 0;
+  timing.FSMC_DataSetupTime = 9;
+  timing.FSMC_BusTurnAroundDuration = 2;
   timing.FSMC_CLKDivision = 0xf;
   timing.FSMC_DataLatency = 0xf;
   timing.FSMC_AccessMode = FSMC_AccessMode_A;
 
   /* Write timing. */
-  alttiming.FSMC_AddressSetupTime = 0;
+  alttiming.FSMC_AddressSetupTime = 2;
   alttiming.FSMC_AddressHoldTime = 0xf;
-  alttiming.FSMC_DataSetupTime = 3;
-  alttiming.FSMC_BusTurnAroundDuration = 0;
+  alttiming.FSMC_DataSetupTime = 6;
+  alttiming.FSMC_BusTurnAroundDuration = 2;
   alttiming.FSMC_CLKDivision = 0xf;
   alttiming.FSMC_DataLatency = 0xf;
   alttiming.FSMC_AccessMode = FSMC_AccessMode_A;
@@ -725,7 +821,9 @@ int main(void)
   //mem_test();
   //pulse_pin_test();
   //fpga_test();
-  test_fsmc_reliability();
+  //test_fsmc_reliability();
+  //test_fsmc_2();
+  test_fsmc_3();
 
   return 0;
 }
