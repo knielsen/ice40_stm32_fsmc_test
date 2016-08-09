@@ -685,6 +685,17 @@ test_fsmc_4()
     read access.
   */
 
+  /*
+    Let's try to first read out each counter until it reaches `0'.
+  */
+  {
+    uint32_t i;
+    for (i = 0; i < 4; ++i) {
+      while (read_fpga(i*2) & 0x7)
+        ;
+    }
+  }
+
   for (;;) {
     serial_puts(USART2, "V0: "); println_uint32(USART2, read_fpga(0) & 0x7);
     serial_puts(USART2, " 0: "); println_uint32(USART2, read_fpga(0) & 0x7);
