@@ -1983,7 +1983,6 @@ F 3 "" H 9400 5750 50  0000 C CNN
 $EndComp
 NoConn ~ 2250 1850
 NoConn ~ 2250 1900
-NoConn ~ 8975 1400
 Text Label 950  1700 0    20   ~ 0
 usb_5v
 $EndSCHEMATC
