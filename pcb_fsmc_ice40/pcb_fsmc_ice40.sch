@@ -562,8 +562,6 @@ F 3 "" H 3250 3700 60  0001 C CNN
 	1    3250 3700
 	1    0    0    -1  
 $EndComp
-Text Label 950  2450 0    20   ~ 0
-pc7
 Text Label 950  2400 0    20   ~ 0
 pc6
 Text Label 950  2350 0    20   ~ 0
@@ -622,9 +620,9 @@ Text Label 950  1800 0    20   ~ 0
 usb_dm
 Text Label 950  1750 0    20   ~ 0
 usb_id
-Text Label 950  1700 0    20   ~ 0
-user_led2
 Text Label 950  1650 0    20   ~ 0
+user_led2
+Text Label 950  2450 0    20   ~ 0
 user_led1
 Text Label 950  1600 0    20   ~ 0
 pa7
@@ -1921,7 +1919,6 @@ NoConn ~ 900  2250
 NoConn ~ 900  2300
 NoConn ~ 900  2350
 NoConn ~ 900  2400
-NoConn ~ 900  2450
 NoConn ~ 900  2750
 NoConn ~ 900  2800
 NoConn ~ 900  2850
@@ -1987,4 +1984,6 @@ $EndComp
 NoConn ~ 2250 1850
 NoConn ~ 2250 1900
 NoConn ~ 8975 1400
+Text Label 950  1700 0    20   ~ 0
+usb_5v
 $EndSCHEMATC
