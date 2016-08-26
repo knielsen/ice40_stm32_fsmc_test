@@ -224,6 +224,56 @@ module writable_regs(input do_write, input wire[AW-1:0] w_adr,
 endmodule // writable_regs
    
 
+module error_counter(input wire clk, input wire enable,
+		     input wire[DW-1:0] old_val, input wire[DW-1:0] new_val,
+		     output wire [7:0] err_cnt);
+
+   reg [DW-1:0] old_val1;
+   reg [DW-1:0] new_val1;
+   reg enable1;
+   reg [DW-1:0] cmp_val2;
+   reg [DW-1:0] new_val2;
+   reg enable2;
+   reg chk_err3;
+   reg carry4;
+   reg [3:0] low_cnt4 = 4'b0000;
+   reg [7:4] high_cnt5 = 4'b0000;
+   reg [3:0] low_cnt5;
+
+   always @(posedge clk) begin
+      // First pipeline stage, just buffer inputs.
+      old_val1 <= old_val;
+      new_val1 <= new_val;
+      enable1 <= enable;
+
+      // Second pipeline stage, compute compare value.
+      cmp_val2 <= old_val1 + 1;
+      new_val2 <= new_val1;
+      enable2 <= enable1;
+
+      // Third stage: Comparison.
+      chk_err3 <= ((enable2 & (cmp_val2 != new_val2)) ? 1'b1 : 1'b0);
+
+      // Fourth stage: Low error count increment.
+      if (chk_err3) begin
+	 carry4 <= ((low_cnt4 == 4'b1111) ? 1'b1 : 1'b0); low_cnt4 <= low_cnt4+1;
+         //{ carry4, low_cnt4 } <= { 0, low_cnt4 } + 5'b00001;
+      end else
+	carry4 <= 0;
+
+      // Fifth stage: Upper count increment.
+      // Can only occur every 1/16 cycle at the most, so safe to use value from
+      // two steps back in the pipeline.
+      low_cnt5 <= low_cnt4;
+      if (carry4)
+	high_cnt5 <= high_cnt5 + 4'b0001;
+   end // always @ (posedge clk)
+
+   assign err_cnt = { high_cnt5, low_cnt5 };
+
+endmodule // error_counter
+
+
 module top (
 	input crystal_clk,
 	input STM32_PIN,
@@ -247,6 +297,8 @@ module top (
    wire do_read;
    wire[DW-1:0] register_data;
    reg[DW-1:0] leddata0, leddata1, leddata2, leddata3;
+   wire chk_err;
+   wire[7:0] err_count;
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
@@ -301,13 +353,33 @@ module top (
 	   2'b10: leddata2 <= leddata2 + 1;
 	   2'b11: leddata3 <= leddata3 + 1;
 	 endcase // case (rw_adr)
+      end else if (do_write) begin
+	 case (rw_adr)
+	   2'b00: begin
+	      /*
+	      if (w_data != leddata0+1)
+		err_count <= err_count+1;
+	       */
+	      leddata0 <= w_data;
+	   end
+	   2'b01:
+	     leddata1 <= w_data;
+	   2'b10:
+	     leddata2 <= w_data;
+	   2'b11:
+	     leddata3 <= w_data;
+	 endcase // case (rw_adr)
       end
    end
+
+   assign chk_err = (do_write & rw_adr == 3'b000);
+   error_counter my_errcnt0(clk, chk_err, leddata0, w_data, err_count);
 
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
    
-   assign {LED0, LED1} = pulse_counter[2:1];
-   assign {LED2, LED3, LED4} = leddata0;
-   assign {LED5, LED6, LED7} = leddata1;
+   //assign {LED0, LED1} = pulse_counter[2:1];
+   //assign {LED2, LED3, LED4} = leddata0;
+   //assign {LED5, LED6, LED7} = leddata1;
+   assign {LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7} = err_count;
 endmodule

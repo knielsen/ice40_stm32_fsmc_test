@@ -708,6 +708,39 @@ test_fsmc_4()
 }
 
 
+__attribute__((unused))
+static void
+test_fsmc_5()
+{
+  uint32_t val;
+
+  /*
+    Write-only test. ICE40 configured to check that values written are
+    monotonously incrementing.
+  */
+
+  /*
+    Let's try to first read out each counter until it reaches `0'.
+  */
+  {
+    uint32_t i;
+    for (i = 0; i < 4; ++i) {
+      while (read_fpga(i*2) & 0x7)
+        ;
+    }
+  }
+
+  val = 0;
+  for (;;) {
+    val = (val+1) & 0x7;
+    write_fpga(0, val);
+    serial_puts(USART2, "V0: "); println_uint32(USART2, val);
+
+    delay(MCU_HZ/3/10/4);
+  }
+}
+
+
 static void
 fsmc_manual_init(void)
 {
@@ -863,7 +896,8 @@ int main(void)
   //test_fsmc_reliability();
   //test_fsmc_2();
   //test_fsmc_3();
-  test_fsmc_4();
+  //test_fsmc_4();
+  test_fsmc_5();
 
   return 0;
 }
