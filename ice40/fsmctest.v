@@ -8,13 +8,16 @@ module pllclk (input ext_clock, output pll_clock, input nrst, output lock);
    assign bypass = 1'b0;
 
    /*
-    Setup a 172 MHz PLL output from the 12 MHz external clock input.
-    The exact 172 MHz clock is achieved by daisy-chaining two PLLs.
-    The first PLL multiplies the input 12MHz to 64.5 MHz, which is then
-    further multiplied by the second PLL up to the 172 MHz.
+    Setup a 150 MHz PLL output from the 12 MHz external clock input.
+    The exact 150 MHz clock is achieved by daisy-chaining two PLLs.
+    The first PLL multiplies the input 12MHz to 56.25 MHz, which is then
+    further multiplied by the second PLL up to the 150 MHz.
+    
+    Write seems to run stable at 150 MHz, while the original 172 MHz seems
+    to be too fast, causing occasional write glitches.
     */
    SB_PLL40_CORE #(.FEEDBACK_PATH("SIMPLE"), .PLLOUT_SELECT("GENCLK"),
-		   .DIVR(4'd0), .DIVF(7'd85), .DIVQ(3'd4),
+		   .DIVR(4'd0), .DIVF(7'd74), .DIVQ(3'd4),
 		   .FILTER_RANGE(3'b001)
    ) mypll1 (.REFERENCECLK(ext_clock),
 	    .PLLOUTGLOBAL(dummy_out1), .PLLOUTCORE(int_clk), .LOCK(lock1),
