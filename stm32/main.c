@@ -855,7 +855,7 @@ fsmc_manual_init(void)
   /* Read timing. */
   timing.FSMC_AddressSetupTime = 2;
   timing.FSMC_AddressHoldTime = 0xf;
-  timing.FSMC_DataSetupTime = 9;
+  timing.FSMC_DataSetupTime = 10;
   timing.FSMC_BusTurnAroundDuration = 2;
   timing.FSMC_CLKDivision = 0xf;
   timing.FSMC_DataLatency = 0xf;
@@ -864,7 +864,7 @@ fsmc_manual_init(void)
   /* Write timing. */
   alttiming.FSMC_AddressSetupTime = 2;
   alttiming.FSMC_AddressHoldTime = 0xf;
-  alttiming.FSMC_DataSetupTime = 6;
+  alttiming.FSMC_DataSetupTime = 8;
   alttiming.FSMC_BusTurnAroundDuration = 2;
   alttiming.FSMC_CLKDivision = 0xf;
   alttiming.FSMC_DataLatency = 0xf;
@@ -893,11 +893,11 @@ int main(void)
   //mem_test();
   //pulse_pin_test();
   //fpga_test();
-  //test_fsmc_reliability();
+  test_fsmc_reliability();
   //test_fsmc_2();
   //test_fsmc_3();
   //test_fsmc_4();
-  test_fsmc_5();
+  //test_fsmc_5();
 
   return 0;
 }

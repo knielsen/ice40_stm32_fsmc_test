@@ -17,7 +17,7 @@ module pllclk (input ext_clock, output pll_clock, input nrst, output lock);
     to be too fast, causing occasional write glitches.
     */
    SB_PLL40_CORE #(.FEEDBACK_PATH("SIMPLE"), .PLLOUT_SELECT("GENCLK"),
-		   .DIVR(4'd0), .DIVF(7'd74), .DIVQ(3'd4),
+		   .DIVR(4'd0), .DIVF(7'd59), .DIVQ(3'd4),
 		   .FILTER_RANGE(3'b001)
    ) mypll1 (.REFERENCECLK(ext_clock),
 	    .PLLOUTGLOBAL(dummy_out1), .PLLOUTCORE(int_clk), .LOCK(lock1),
@@ -131,16 +131,18 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
   (input aNE, aNOE, aNWE,
    input wire [ADRW-1:0] aAn, input wire[DATW-1:0] aDn,
    input 		 clk,
-   output wire[ADRW-1:0] rw_adr,
+   output wire[ADRW-1:0] r_adr, output wire[ADRW-1:0] w_adr,
    output reg 		 do_read, input wire[DATW-1:0] read_data,
    output reg 		 do_write, output reg[DATW-1:0] w_data,
    output 		 io_output, output wire[DATW-1:0] io_data);
 
    wire sNE, sNOE, sNWE;
-   reg[ADRW-1:0] sAn;
+   reg[ADRW-1:0] sAn_r;
+   reg[ADRW-1:0] sAn_w;
    reg[DATW-1:0] rDn;
    reg[DATW-1:0] wDn;
-   wire[ADRW-1:0] next_sAn;
+   wire[ADRW-1:0] next_sAn_r;
+   wire[ADRW-1:0] next_sAn_w;
    wire[DATW-1:0] next_rDn;
    wire[DATW-1:0] next_wDn;
    wire next_do_write, next_do_read;
@@ -162,7 +164,8 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
       do_write <= next_do_write;
       do_read <= next_do_read;
 
-      sAn <= next_sAn;
+      sAn_r <= next_sAn_r;
+      sAn_w <= next_sAn_w;
       wDn <= next_wDn;
       rDn <= next_rDn;
    end
@@ -171,7 +174,8 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
       We can use the external address unsynchronised, as it will be stable
       when NOE/NWE toggles.
     */
-   assign next_sAn = st_idle & ~sNE & (~sNOE | ~sNWE) ? aAn : sAn;
+   assign next_sAn_r = st_idle & ~sNE & ~sNOE ? aAn : sAn_r;
+   assign next_sAn_w = st_idle & ~sNE & ~sNWE ? aAn : sAn_w;
 
    /* Incoming write. */
    /* Latch the write data on the falling edge of NWE. NWE is synchronised,
@@ -200,7 +204,8 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
    assign io_output = st_read2 & next_st_read2;
    assign io_data = rDn;
 
-   assign rw_adr = sAn;
+   assign r_adr = sAn_r;
+   assign w_adr = sAn_w;
    assign w_data = wDn;
 endmodule // clocked_bus_slave
 
@@ -295,7 +300,8 @@ module top (
    wire[DW-1:0] aDn_input;
    wire io_d_output;
    wire do_write;
-   wire[AW-1:0] rw_adr;
+   wire[AW-1:0] r_adr;
+   wire[AW-1:0] w_adr;
    wire[DW-1:0] w_data;
    wire do_read;
    wire[DW-1:0] register_data;
@@ -323,15 +329,14 @@ module top (
    clocked_bus_slave #(.ADRW(AW), .DATW(DW))
      my_bus_slave(aNE, aNOE, aNWE,
 		  {aA2, aA1}, aDn_input,
-		  clk, rw_adr,
+		  clk, r_adr, w_adr,
 		  do_read, register_data,
 		  do_write, w_data,
 		  io_d_output, aDn_output);
 
-/*
-   writable_regs led_registers(do_write, rw_adr, w_data, clk,
+   writable_regs led_registers(do_write, w_adr, w_data, clk,
 			       leddata0, leddata1, leddata2, leddata3);
-*/
+
    /* The clocked_bus_slave asserts do_read once per read transaction on the
       external bus (synchronous on clk). This can be used to have side effects
       on read (eg. clear "data ready" on read of data register). However, in
@@ -339,30 +344,27 @@ module top (
       the read data continously (clocked_bus_slave latches the read value).
     */
    always @(*) begin
-      case (rw_adr)
+      case (r_adr)
 	2'b00: register_data <= leddata0;
 	2'b01: register_data <= leddata1;
 	2'b10: register_data <= leddata2;
 	2'b11: register_data <= leddata3;
 	default: register_data <= 0;
-      endcase // case (rw_adr)
+      endcase // case (r_adr)
    end
 
+   /*
    always @(posedge clk) begin
       if (do_read) begin
-	 case (rw_adr)
+	 case (r_adr)
 	   2'b00: leddata0 <= leddata0 + 1;
 	   2'b01: leddata1 <= leddata1 + 1;
 	   2'b10: leddata2 <= leddata2 + 1;
 	   2'b11: leddata3 <= leddata3 + 1;
-	 endcase // case (rw_adr)
+	 endcase // case (r_adr)
       end else if (do_write) begin
-	 case (rw_adr)
+	 case (w_adr)
 	   2'b00: begin
-	      /*
-	      if (w_data != leddata0+1)
-		err_count <= err_count+1;
-	       */
 	      leddata0 <= w_data;
 	   end
 	   2'b01:
@@ -371,18 +373,19 @@ module top (
 	     leddata2 <= w_data;
 	   2'b11:
 	     leddata3 <= w_data;
-	 endcase // case (rw_adr)
+	 endcase // case (w_adr)
       end
    end
 
    assign chk_err = (do_write & rw_adr == 3'b000);
    error_counter my_errcnt0(clk, chk_err, leddata0, w_data, err_count);
+   */
 
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
    
-   //assign {LED0, LED1} = pulse_counter[2:1];
-   //assign {LED2, LED3, LED4} = leddata0;
-   //assign {LED5, LED6, LED7} = leddata1;
-   assign {LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7} = err_count;
+   assign {LED0, LED1} = pulse_counter[2:1];
+   assign {LED2, LED3, LED4} = leddata0;
+   assign {LED5, LED6, LED7} = leddata1;
+   //assign {LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7} = err_count;
 endmodule
