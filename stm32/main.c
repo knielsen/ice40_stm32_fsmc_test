@@ -11,7 +11,7 @@
 
 #include <math.h>
 
-#include <stm32f4_discovery.h>
+#include <stm32f4xx.h>
 
 
 #define MCU_HZ 168000000
@@ -40,23 +40,23 @@ static void setup_serial(void)
   GPIO_InitTypeDef GPIO_InitStructure;
   USART_InitTypeDef USART_InitStructure;
 
-  /* enable peripheral clock for USART2 */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+  /* enable peripheral clock for USART3 */
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
 
-  /* GPIOA clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  /* GPIOB clock enable */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
-  /* GPIOA Configuration:  USART2 TX on PA2 */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  /* GPIOB Configuration:  USART3 TX on PB10 */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
 
-  /* Connect USART2 pins to AF2 */
+  /* Connect USART3 pins to AF2 */
   // TX = PA2
-  GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_USART2);
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_USART3);
 
   USART_InitStructure.USART_BaudRate = 115200;
   USART_InitStructure.USART_WordLength = USART_WordLength_8b;
@@ -64,9 +64,9 @@ static void setup_serial(void)
   USART_InitStructure.USART_Parity = USART_Parity_No;
   USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
   USART_InitStructure.USART_Mode = USART_Mode_Tx;
-  USART_Init(USART2, &USART_InitStructure);
+  USART_Init(USART3, &USART_InitStructure);
 
-  USART_Cmd(USART2, ENABLE); // enable USART2
+  USART_Cmd(USART3, ENABLE); // enable USART3
 }
 
 
@@ -75,27 +75,27 @@ setup_led(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOG, &GPIO_InitStructure);
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 
 static void
 led_on(void)
 {
-  GPIO_SetBits(GPIOG, GPIO_Pin_15);
+  GPIO_SetBits(GPIOA, GPIO_Pin_8);
 }
 
 
 static void
 led_off(void)
 {
-  GPIO_ResetBits(GPIOG, GPIO_Pin_15);
+  GPIO_ResetBits(GPIOA, GPIO_Pin_8);
 }
 
 
@@ -318,13 +318,13 @@ check_mem_inc(uint16_t start, uint32_t block)
         ++err;
         if (err <= 5)
         {
-          serial_puts(USART2, "[0x");
-          serial_output_hexbyte(USART2, d >> 8);
-          serial_output_hexbyte(USART2, d & 0xff);
-          serial_puts(USART2, "!=0x");
-          serial_output_hexbyte(USART2, v >> 8);
-          serial_output_hexbyte(USART2, v & 0xff);
-          serial_puts(USART2, "]");
+          serial_puts(USART3, "[0x");
+          serial_output_hexbyte(USART3, d >> 8);
+          serial_output_hexbyte(USART3, d & 0xff);
+          serial_puts(USART3, "!=0x");
+          serial_output_hexbyte(USART3, v >> 8);
+          serial_output_hexbyte(USART3, v & 0xff);
+          serial_puts(USART3, "]");
         }
       }
     }
@@ -339,19 +339,19 @@ check_block(uint16_t start, uint32_t block)
 {
   uint32_t err;
 
-  serial_puts(USART2, "write block start=0x");
-  serial_output_hexbyte(USART2, start >> 8);
-  serial_output_hexbyte(USART2, start & 0xff);
-  serial_puts(USART2, " size=");
-  println_uint32(USART2, block);
+  serial_puts(USART3, "write block start=0x");
+  serial_output_hexbyte(USART3, start >> 8);
+  serial_output_hexbyte(USART3, start & 0xff);
+  serial_puts(USART3, " size=");
+  println_uint32(USART3, block);
   led_on();
   fill_mem_inc(start, block);
 
-  serial_puts(USART2, "Read back ...");
+  serial_puts(USART3, "Read back ...");
   led_off();
   err = check_mem_inc(start, block);
-  serial_puts(USART2, " errors=");
-  println_uint32(USART2, err);
+  serial_puts(USART3, " errors=");
+  println_uint32(USART3, err);
 }
 
 
@@ -440,69 +440,69 @@ again:
   write_fpga(2, 0b111);
   write_fpga(4, 0b000);
   write_fpga(6, 0b000);
-  serial_puts(USART2, "Read back: ");
-  serial_output_hex(USART2, read_fpga(0));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(2));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(4));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(6));
-  serial_puts(USART2, "\n");
+  serial_puts(USART3, "Read back: ");
+  serial_output_hex(USART3, read_fpga(0));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(2));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(4));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(6));
+  serial_puts(USART3, "\n");
 
   delay(MCU_HZ/3);
   led_off();
   write_fpga(0, 0b000);
   write_fpga(2, 0b000);
-  serial_puts(USART2, "Read back: ");
-  serial_output_hex(USART2, read_fpga(0));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(2));
-  serial_puts(USART2, "\n");
+  serial_puts(USART3, "Read back: ");
+  serial_output_hex(USART3, read_fpga(0));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(2));
+  serial_puts(USART3, "\n");
 
   delay(MCU_HZ/3);
   led_on();
   write_fpga(0, 0b101);
   write_fpga(2, 0b010);
-  serial_puts(USART2, "Read back: ");
-  serial_output_hex(USART2, read_fpga(0));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(2));
-  serial_puts(USART2, "\n");
+  serial_puts(USART3, "Read back: ");
+  serial_output_hex(USART3, read_fpga(0));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(2));
+  serial_puts(USART3, "\n");
 
   delay(MCU_HZ/3);
   led_off();
   write_fpga(0, 0b010);
   write_fpga(2, 0b101);
-  serial_puts(USART2, "Read back: ");
-  serial_output_hex(USART2, read_fpga(0));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(2));
-  serial_puts(USART2, "\n");
+  serial_puts(USART3, "Read back: ");
+  serial_output_hex(USART3, read_fpga(0));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(2));
+  serial_puts(USART3, "\n");
 
   delay(MCU_HZ/3);
   led_on();
   write_fpga(0, 0b110);
   write_fpga(2, 0b011);
-  serial_puts(USART2, "Read back: ");
-  serial_output_hex(USART2, read_fpga(0));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(2));
-  serial_puts(USART2, "\n");
+  serial_puts(USART3, "Read back: ");
+  serial_output_hex(USART3, read_fpga(0));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(2));
+  serial_puts(USART3, "\n");
 
   delay(MCU_HZ/3);
   led_off();
   write_fpga(0, 0b111);
   write_fpga(2, 0b111);
-  serial_puts(USART2, "Read back: ");
-  serial_output_hex(USART2, read_fpga(0));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(2));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(4));
-  serial_puts(USART2, " ");
-  serial_output_hex(USART2, read_fpga(6));
-  serial_puts(USART2, "\n");
+  serial_puts(USART3, "Read back: ");
+  serial_output_hex(USART3, read_fpga(0));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(2));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(4));
+  serial_puts(USART3, " ");
+  serial_output_hex(USART3, read_fpga(6));
+  serial_puts(USART3, "\n");
 goto again;
   for (;;)
     ;
@@ -534,28 +534,28 @@ test_fsmc_reliability(void)
 
     if (errors < 10) {
       if (o0 != i0) {
-        serial_puts(USART2, "Diff 0: ");
-        print_uint32(USART2, i0);
-        serial_puts(USART2, " != ");
-        println_uint32(USART2, o0);
+        serial_puts(USART3, "Diff 0: ");
+        print_uint32(USART3, i0);
+        serial_puts(USART3, " != ");
+        println_uint32(USART3, o0);
       }
       if (o1 != i1) {
-        serial_puts(USART2, "Diff 1: ");
-        print_uint32(USART2, i1);
-        serial_puts(USART2, " != ");
-        println_uint32(USART2, o1);
+        serial_puts(USART3, "Diff 1: ");
+        print_uint32(USART3, i1);
+        serial_puts(USART3, " != ");
+        println_uint32(USART3, o1);
       }
       if (o2 != i2) {
-        serial_puts(USART2, "Diff 2: ");
-        print_uint32(USART2, i2);
-        serial_puts(USART2, " != ");
-        println_uint32(USART2, o2);
+        serial_puts(USART3, "Diff 2: ");
+        print_uint32(USART3, i2);
+        serial_puts(USART3, " != ");
+        println_uint32(USART3, o2);
       }
       if (o3 != i3) {
-        serial_puts(USART2, "Diff 3: ");
-        print_uint32(USART2, i3);
-        serial_puts(USART2, " != ");
-        println_uint32(USART2, o3);
+        serial_puts(USART3, "Diff 3: ");
+        print_uint32(USART3, i3);
+        serial_puts(USART3, " != ");
+        println_uint32(USART3, o3);
       }
     }
 
@@ -567,11 +567,11 @@ test_fsmc_reliability(void)
 
     ++iterations;
     if ((iterations & ((1<<22)-1)) == 0) {
-      print_uint32(USART2, iterations >> 22);
-      serial_puts(USART2, "  Errors: ");
-      print_uint32(USART2, errors);
-      serial_puts(USART2, ", pct: ");
-      println_float(USART2, (float)errors/(float)iterations*(100/4), 2, 5);
+      print_uint32(USART3, iterations >> 22);
+      serial_puts(USART3, "  Errors: ");
+      print_uint32(USART3, errors);
+      serial_puts(USART3, ", pct: ");
+      println_float(USART3, (float)errors/(float)iterations*(100/4), 2, 5);
       if ((ledstate = !ledstate))
         led_on();
       else
@@ -600,10 +600,10 @@ test_fsmc_2(void)
 
     if (errors < 10) {
       if (o1 != i1) {
-        serial_puts(USART2, "Diff 1: ");
-        print_uint32(USART2, i1);
-        serial_puts(USART2, " != ");
-        println_uint32(USART2, o1);
+        serial_puts(USART3, "Diff 1: ");
+        print_uint32(USART3, i1);
+        serial_puts(USART3, " != ");
+        println_uint32(USART3, o1);
       }
     }
 
@@ -612,11 +612,11 @@ test_fsmc_2(void)
 
     ++iterations;
     if ((iterations & ((1<<22)-1)) == 0) {
-      print_uint32(USART2, iterations >> 22);
-      serial_puts(USART2, "  Errors: ");
-      print_uint32(USART2, errors);
-      serial_puts(USART2, ", pct: ");
-      println_float(USART2, (float)errors/(float)iterations*(100/4), 2, 5);
+      print_uint32(USART3, iterations >> 22);
+      serial_puts(USART3, "  Errors: ");
+      print_uint32(USART3, errors);
+      serial_puts(USART3, ", pct: ");
+      println_float(USART3, (float)errors/(float)iterations*(100/4), 2, 5);
       if ((ledstate = !ledstate))
         led_on();
       else
@@ -640,18 +640,18 @@ test_fsmc_3()
   for (adr = 0; adr < 8; adr += 2) {
     uint32_t S, I;
 
-    serial_puts(USART2, "Test matrix for addr=");
-    println_uint32(USART2, adr);
-    serial_puts(USART2, "S  \\  I");
+    serial_puts(USART3, "Test matrix for addr=");
+    println_uint32(USART3, adr);
+    serial_puts(USART3, "S  \\  I");
     for (I = 0; I < 8; ++I) {
-      serial_puts(USART2, " ");
-      print_uint32(USART2, I);
+      serial_puts(USART3, " ");
+      print_uint32(USART3, I);
     }
-    serial_puts(USART2, "\r\n");
+    serial_puts(USART3, "\r\n");
 
     for (S = 0; S < 8; ++S) {
-      print_uint32(USART2, S);
-      serial_puts(USART2, "      ");
+      print_uint32(USART3, S);
+      serial_puts(USART3, "      ");
       for (I = 0; I < 8; ++I) {
         uint32_t n;
         uint32_t errors;
@@ -666,9 +666,9 @@ test_fsmc_3()
             ++errors;
           vin = (vin + I) & 7;
         }
-        serial_puts(USART2, errors == 0 ? "  " : (errors <= 5 ? " ." : (errors <= 100 ? " ," :" *")));
+        serial_puts(USART3, errors == 0 ? "  " : (errors <= 5 ? " ." : (errors <= 100 ? " ," :" *")));
       }
-      serial_puts(USART2, "\r\n");
+      serial_puts(USART3, "\r\n");
     }
   }
 
@@ -697,11 +697,11 @@ test_fsmc_4()
   }
 
   for (;;) {
-    serial_puts(USART2, "V0: "); println_uint32(USART2, read_fpga(0) & 0x7);
-    serial_puts(USART2, " 0: "); println_uint32(USART2, read_fpga(0) & 0x7);
-    serial_puts(USART2, "V1: "); println_uint32(USART2, read_fpga(2) & 0x7);
-    serial_puts(USART2, "V2: "); println_uint32(USART2, read_fpga(4) & 0x7);
-    serial_puts(USART2, "V3: "); println_uint32(USART2, read_fpga(6) & 0x7);
+    serial_puts(USART3, "V0: "); println_uint32(USART3, read_fpga(0) & 0x7);
+    serial_puts(USART3, " 0: "); println_uint32(USART3, read_fpga(0) & 0x7);
+    serial_puts(USART3, "V1: "); println_uint32(USART3, read_fpga(2) & 0x7);
+    serial_puts(USART3, "V2: "); println_uint32(USART3, read_fpga(4) & 0x7);
+    serial_puts(USART3, "V3: "); println_uint32(USART3, read_fpga(6) & 0x7);
 
     delay(MCU_HZ/3/2);
   }
@@ -734,7 +734,7 @@ test_fsmc_5()
   for (;;) {
     val = (val+1) & 0x7;
     write_fpga(0, val);
-    serial_puts(USART2, "V0: "); println_uint32(USART2, val);
+    serial_puts(USART3, "V0: "); println_uint32(USART3, val);
 
     delay(MCU_HZ/3/10/4);
   }
@@ -884,11 +884,11 @@ int main(void)
   delay(2000000);
   setup_serial();
   setup_led();
-  serial_puts(USART2, "Initialising...\r\n");
+  serial_puts(USART3, "Initialising...\r\n");
   delay(2000000);
   fsmc_manual_init();
 
-  serial_puts(USART2, "Hello world, ready to blink!\r\n");
+  serial_puts(USART3, "Hello world, ready to blink!\r\n");
 
   //mem_test();
   //pulse_pin_test();

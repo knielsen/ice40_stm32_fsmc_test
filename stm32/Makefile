@@ -9,7 +9,7 @@ PROJ_NAME=fsmctest
 # This is the directory containing the firmware package,
 # the unzipped folder downloaded from here:
 # http://www.st.com/web/en/catalog/tools/PF257904
-STM_DIR=/kvm/src/STM32F4-Discovery_FW_V1.1.0
+STM_DIR=/kvm/src/STM32F4xx_DSP_StdPeriph_Lib_V1.6.1
 
 # This is where the source files are located,
 # which are not in the current directory
@@ -40,12 +40,12 @@ SRCS  += misc.c
 # Startup file written by ST
 # The assembly code in this file is the first one to be
 # executed. Normally you do not change this file.
-SRCS += $(STM_DIR)/Libraries/CMSIS/ST/STM32F4xx/Source/Templates/TrueSTUDIO/startup_stm32f4xx.s
+SRCS += $(STM_DIR)/Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/TrueSTUDIO/startup_stm32f40xx.s
 
 # The header files we use are located here
 INC_DIRS  = $(STM_DIR)/Utilities/STM32F4-Discovery
 INC_DIRS += $(STM_DIR)/Libraries/CMSIS/Include
-INC_DIRS += $(STM_DIR)/Libraries/CMSIS/ST/STM32F4xx/Include
+INC_DIRS += $(STM_DIR)/Libraries/CMSIS/Device/ST/STM32F4xx/Include
 INC_DIRS += $(STM_DIR)/Libraries/STM32F4xx_StdPeriph_Driver/inc
 INC_DIRS += .
 
@@ -78,6 +78,7 @@ DEFS    = -DUSE_STDPERIPH_DRIVER
 ## Compiler options
 CFLAGS  = -ggdb
 CFLAGS += -O3
+CFLAGS += -DSTM32F40_41xxx
 CFLAGS += -Wall -Wextra -Warray-bounds
 CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
