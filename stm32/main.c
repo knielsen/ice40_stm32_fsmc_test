@@ -70,32 +70,39 @@ static void setup_serial(void)
 }
 
 
+#define LED_GPIO_PERIPH RCC_AHB1Periph_GPIOA
+#define LED_GPIO GPIOA
+#define LED_PIN GPIO_Pin_8
+//#define LED_GPIO_PERIPH RCC_AHB1Periph_GPIOC
+//#define LED_GPIO GPIOC
+//#define LED_PIN GPIO_Pin_7
+
 static void
 setup_led(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+  RCC_AHB1PeriphClockCmd(LED_GPIO_PERIPH, ENABLE);
+  GPIO_InitStructure.GPIO_Pin = LED_PIN;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_Init(LED_GPIO, &GPIO_InitStructure);
 }
 
 
 static void
 led_on(void)
 {
-  GPIO_SetBits(GPIOA, GPIO_Pin_8);
+  GPIO_SetBits(LED_GPIO, LED_PIN);
 }
 
 
 static void
 led_off(void)
 {
-  GPIO_ResetBits(GPIOA, GPIO_Pin_8);
+  GPIO_ResetBits(LED_GPIO, LED_PIN);
 }
 
 
