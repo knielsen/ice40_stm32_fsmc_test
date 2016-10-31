@@ -530,14 +530,14 @@ test_fsmc_reliability(void)
   errors = 0;
   ledstate = 0;
   for (;;) {
-    write_fpga(0, i0);
-    o0 = read_fpga(0) & 0x7;
-    write_fpga(2, i1);
-    write_fpga(4, i2);
-    write_fpga(6, i3);
-    o1 = read_fpga(2) & 0x7;
-    o2 = read_fpga(4) & 0x7;
-    o3 = read_fpga(6) & 0x7;
+    write_fpga(12, i0);
+    o0 = read_fpga(12);
+    write_fpga(200, i1);
+    write_fpga(120, i2);
+    write_fpga(510, i3);
+    o1 = read_fpga(200);
+    o2 = read_fpga(120);
+    o3 = read_fpga(510);
 
     if (errors < 10) {
       if (o0 != i0) {
@@ -567,10 +567,10 @@ test_fsmc_reliability(void)
     }
 
     errors += (o0 != i0) + (o1 != i1) + (o2 != i2) + (o3 != i3);
-    i0 = (i0+1) & 0x7;
-    i1 = (i1+3) & 0x7;
-    i2 = (i2+6) & 0x7;
-    i3 = (i3+7) & 0x7;
+    i0 = (i0+1);
+    i1 = (i1+3);
+    i2 = (i2+6);
+    i3 = (i3+7);
 
     ++iterations;
     if ((iterations & ((1<<22)-1)) == 0) {
