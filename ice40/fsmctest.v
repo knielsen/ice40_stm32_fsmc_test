@@ -1,33 +1,17 @@
-parameter DW = 3;
-parameter AW = 2;
+parameter DW = 16;
+parameter AW = 8;
 
 module pllclk (input ext_clock, output pll_clock, input nrst, output lock);
-   wire dummy_out1, dummy_out2, int_clk;
+   wire dummy_out;
    wire bypass, lock1;
 
    assign bypass = 1'b0;
 
-   /*
-    Setup a 150 MHz PLL output from the 12 MHz external clock input.
-    The exact 150 MHz clock is achieved by daisy-chaining two PLLs.
-    The first PLL multiplies the input 12MHz to 56.25 MHz, which is then
-    further multiplied by the second PLL up to the 150 MHz.
-    
-    Write seems to run stable at 150 MHz, while the original 172 MHz seems
-    to be too fast, causing occasional write glitches.
-    */
    SB_PLL40_CORE #(.FEEDBACK_PATH("SIMPLE"), .PLLOUT_SELECT("GENCLK"),
-		   .DIVR(4'd0), .DIVF(7'd59), .DIVQ(3'd4),
+		   .DIVR(4'd0), .DIVF(7'b1000111), .DIVQ(3'b011),
 		   .FILTER_RANGE(3'b001)
    ) mypll1 (.REFERENCECLK(ext_clock),
-	    .PLLOUTGLOBAL(dummy_out1), .PLLOUTCORE(int_clk), .LOCK(lock1),
-	    .RESETB(nrst), .BYPASS(bypass));
-
-   SB_PLL40_CORE #(.FEEDBACK_PATH("SIMPLE"), .PLLOUT_SELECT("GENCLK"),
-		   .DIVR(4'd2), .DIVF(7'd31), .DIVQ(3'd2),
-		   .FILTER_RANGE(3'b001)
-   ) mypll2 (.REFERENCECLK(int_clk),
-	    .PLLOUTGLOBAL(pll_clock), .PLLOUTCORE(dummy_out2), .LOCK(lock),
+	    .PLLOUTGLOBAL(pll_clock), .PLLOUTCORE(dummy_out), .LOCK(lock1),
 	    .RESETB(nrst), .BYPASS(bypass));
 
 endmodule	    
@@ -96,36 +80,7 @@ module count_pulses_on_leds(input async_pulse_pin, clk, output wire[7:0] leds);
 
    posedge_counter #(8) mycounter(async_pulse_pin, clk, pulse_count);
    assign leds = pulse_count;
-endmodule // count_pulses_on_leds
-
-
-module simple_write_bus_slave(input aNE, aNOE, aNWE, aA1, aD0,
-			      input clk,
-			      output reg do_write,
-			      output reg w_adr,
-			      output reg w_data);
-   // Synchronised inputs.
-   wire sNE, sNOE, sNWE, sA1, sD0;
-   
-   synchroniser sync_NE(aNE, clk, sNE);
-   synchroniser sync_NOE(aNOE, clk, sNOE);
-   synchroniser sync_NWE(aNWE, clk, sNWE);
-   synchroniser sync_A1(aA1, clk, sA1);
-   synchroniser sync_D0(aD0, clk, sD0);
-
-   always @(*) begin
-      if (~sNE & sNOE & ~sNWE) begin
-	 do_write <= 1'b1;
-	 w_adr <= sA1;
-	 w_data <= sD0;
-      end else begin
-	 do_write <= 1'b0;
-	 w_adr <= 1'b0;
-	 w_data <= 1'b0;
-      end
-   end // always @ (*)
-endmodule // simple_write_bus_slave
-
+endmodule // count_pulses_on_leds 
 
 module clocked_bus_slave #(parameter ADRW=1, DATW=1)
   (input aNE, aNOE, aNWE,
@@ -218,10 +173,10 @@ module writable_regs(input do_write, input wire[AW-1:0] w_adr,
    always @(posedge clk) begin
       if (do_write) begin
 	 case (w_adr)
-	   2'b00: vreg0 <= w_data;
-	   2'b01: vreg1 <= w_data;
-	   2'b10: vreg2 <= w_data;
-	   2'b11: vreg3 <= w_data;
+	   8'd6: vreg0 <= w_data;
+	   8'd100: vreg1 <= w_data;
+	   8'd60: vreg2 <= w_data;
+	   8'hff: vreg3 <= w_data;
 	 endcase // case (w_adr)
       end
    end
@@ -286,10 +241,9 @@ module top (
 	input crystal_clk,
 	input STM32_PIN,
 	input aNE, aNOE, aNWE,
-	input aA1, aA2,
-	inout aD0, aD1, aD2,
-	output LED0, output LED1, output LED2, output LED3,
-	output LED4, output LED5, output LED6, output LED7,
+	input [AW-1:0] aA,
+	inout [DW-1:0] aD,
+	output [7:0] LED,
 	input uart_tx_in, output uart_tx_out
 );
 
@@ -311,7 +265,7 @@ module top (
 
    /* Type 101001 is output with tristate/enable and simple input. */
    SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b0))
-     io_Dn[DW-1:0](.PACKAGE_PIN({aD2, aD1, aD0}),
+     io_Dn[DW-1:0](.PACKAGE_PIN(aD),
 	   .OUTPUT_ENABLE(io_d_output),
 	   .D_OUT_0(aDn_output),
 	   .D_IN_0(aDn_input)
@@ -321,14 +275,9 @@ module top (
    pllclk my_pll(crystal_clk, clk, nrst, lock);
    count_pulses_on_leds my_ledshow(/*STM32_PIN*/aNWE, clk, pulse_counter);
 
-/*
-   simple_write_bus_slave my_bus_slave(aNE, aNOE, aNWE, aA1, aD0,
-				       clk,
-				       do_write, w_adr, w_data);
-*/
    clocked_bus_slave #(.ADRW(AW), .DATW(DW))
      my_bus_slave(aNE, aNOE, aNWE,
-		  {aA2, aA1}, aDn_input,
+		  aA, aDn_input,
 		  clk, r_adr, w_adr,
 		  do_read, register_data,
 		  do_write, w_data,
@@ -345,10 +294,10 @@ module top (
     */
    always @(*) begin
       case (r_adr)
-	2'b00: register_data <= leddata0;
-	2'b01: register_data <= leddata1;
-	2'b10: register_data <= leddata2;
-	2'b11: register_data <= leddata3;
+	8'd6: register_data <= leddata0;
+	8'd100: register_data <= leddata1;
+	8'd60: register_data <= leddata2;
+	8'hff: register_data <= leddata3;
 	default: register_data <= 0;
       endcase // case (r_adr)
    end
@@ -384,8 +333,8 @@ module top (
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
    
-   assign {LED0, LED1} = pulse_counter[2:1];
-   assign {LED2, LED3, LED4} = leddata0;
-   assign {LED5, LED6, LED7} = leddata1;
+   assign LED[1:0] = pulse_counter[2:1];
+   assign LED[2:4] = leddata0;
+   assign LED[5:7] = leddata1;
    //assign {LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7} = err_count;
 endmodule
