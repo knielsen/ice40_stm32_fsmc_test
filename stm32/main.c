@@ -532,7 +532,7 @@ test_fsmc_reliability(void)
   for (;;) {
     write_fpga(12, i0);
     o0 = read_fpga(12);
-    write_fpga(200, i1);
+    write_fpga(50, i1);
     write_fpga(120, i2);
     write_fpga(510, i3);
     o1 = read_fpga(200);

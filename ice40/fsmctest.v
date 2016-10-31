@@ -32,55 +32,7 @@ module synchroniser #(parameter W=1)
 
    dff #(W) first_reg(D, clk, M);
    dff #(W) last_reg(M, clk, Q);
-endmodule
-
-
-module edge_detector(input async_signal, input clk, output reg edge_detected);
-   wire sync_signal;
-   wire last_signal;
-
-   synchroniser syncer(async_signal, clk, sync_signal);
-   dff save_last(sync_signal, clk, last_signal);
-
-   always @(posedge clk)
-     edge_detected <= sync_signal ^ last_signal;
-endmodule // edge_detector
-
-
-module posedge_detector(input async_signal, input clk, output reg edge_detected);
-   wire sync_signal;
-   wire last_signal;
-
-   synchroniser syncer(async_signal, clk, sync_signal);
-   dff save_last(sync_signal, clk, last_signal);
-
-   always @(posedge clk)
-     edge_detected <= sync_signal & ~last_signal;
-endmodule // posedge_detector
-
-
-module posedge_counter #(parameter W=8)
-   (input async_signal, input clk, output wire[W-1:0] count);
-
-   wire gotedge;
-   reg[W-1:0] counter;
-
-   posedge_detector detector(async_signal, clk, gotedge);
-
-   always @(posedge clk)
-     if (gotedge)
-       counter <= counter+1;
-
-   assign count = counter;
-endmodule // posedge_counter
-
-
-module count_pulses_on_leds(input async_pulse_pin, clk, output wire[7:0] leds);
-   wire[7:0] pulse_count;
-
-   posedge_counter #(8) mycounter(async_pulse_pin, clk, pulse_count);
-   assign leds = pulse_count;
-endmodule // count_pulses_on_leds 
+endmodule 
 
 module clocked_bus_slave #(parameter ADRW=1, DATW=1)
   (input aNE, aNOE, aNWE,
@@ -164,87 +116,18 @@ module clocked_bus_slave #(parameter ADRW=1, DATW=1)
    assign w_data = wDn;
 endmodule // clocked_bus_slave
 
-
-module writable_regs(input do_write, input wire[AW-1:0] w_adr,
-		     input wire[DW-1:0] w_data, input clk,
-		     output wire[DW-1:0] v0, v1, v2, v3);
-   reg[DW-1:0] vreg0, vreg1, vreg2, vreg3;
-
-   always @(posedge clk) begin
-      if (do_write) begin
-	 case (w_adr)
-	   8'd6: vreg0 <= w_data;
-	   8'd100: vreg1 <= w_data;
-	   8'd60: vreg2 <= w_data;
-	   8'hff: vreg3 <= w_data;
-	 endcase // case (w_adr)
-      end
-   end
-   assign v0 = vreg0;
-   assign v1 = vreg1;
-   assign v2 = vreg2;
-   assign v3 = vreg3;
-endmodule // writable_regs
-   
-
-module error_counter(input wire clk, input wire enable,
-		     input wire[DW-1:0] old_val, input wire[DW-1:0] new_val,
-		     output wire [7:0] err_cnt);
-
-   reg [DW-1:0] old_val1;
-   reg [DW-1:0] new_val1;
-   reg enable1;
-   reg [DW-1:0] cmp_val2;
-   reg [DW-1:0] new_val2;
-   reg enable2;
-   reg chk_err3;
-   reg carry4;
-   reg [3:0] low_cnt4 = 4'b0000;
-   reg [7:4] high_cnt5 = 4'b0000;
-   reg [3:0] low_cnt5;
-
-   always @(posedge clk) begin
-      // First pipeline stage, just buffer inputs.
-      old_val1 <= old_val;
-      new_val1 <= new_val;
-      enable1 <= enable;
-
-      // Second pipeline stage, compute compare value.
-      cmp_val2 <= old_val1 + 1;
-      new_val2 <= new_val1;
-      enable2 <= enable1;
-
-      // Third stage: Comparison.
-      chk_err3 <= ((enable2 & (cmp_val2 != new_val2)) ? 1'b1 : 1'b0);
-
-      // Fourth stage: Low error count increment.
-      if (chk_err3) begin
-	 carry4 <= ((low_cnt4 == 4'b1111) ? 1'b1 : 1'b0); low_cnt4 <= low_cnt4+1;
-         //{ carry4, low_cnt4 } <= { 0, low_cnt4 } + 5'b00001;
-      end else
-	carry4 <= 0;
-
-      // Fifth stage: Upper count increment.
-      // Can only occur every 1/16 cycle at the most, so safe to use value from
-      // two steps back in the pipeline.
-      low_cnt5 <= low_cnt4;
-      if (carry4)
-	high_cnt5 <= high_cnt5 + 4'b0001;
-   end // always @ (posedge clk)
-
-   assign err_cnt = { high_cnt5, low_cnt5 };
-
-endmodule // error_counter
-
-
 module top (
+  /* FSMC */
 	input crystal_clk,
 	input STM32_PIN,
 	input aNE, aNOE, aNWE,
 	input [AW-1:0] aA,
 	inout [DW-1:0] aD,
-	output [7:0] LED,
-	input uart_tx_in, output uart_tx_out
+	//output [7:0] LED,
+	input uart_tx_in, output uart_tx_out,
+  /* VGA */
+  output [2:0] red, green, blue,
+  output hsync, vsync
 );
 
    wire clk;
@@ -259,7 +142,6 @@ module top (
    wire[DW-1:0] w_data;
    wire do_read;
    wire[DW-1:0] register_data;
-   reg[DW-1:0] leddata0, leddata1, leddata2, leddata3;
    wire chk_err;
    wire[7:0] err_count;
 
@@ -273,7 +155,6 @@ module top (
 
    assign nrst = 1'b1;
    pllclk my_pll(crystal_clk, clk, nrst, lock);
-   count_pulses_on_leds my_ledshow(/*STM32_PIN*/aNWE, clk, pulse_counter);
 
    clocked_bus_slave #(.ADRW(AW), .DATW(DW))
      my_bus_slave(aNE, aNOE, aNWE,
@@ -283,9 +164,6 @@ module top (
 		  do_write, w_data,
 		  io_d_output, aDn_output);
 
-   writable_regs led_registers(do_write, w_adr, w_data, clk,
-			       leddata0, leddata1, leddata2, leddata3);
-
    /* The clocked_bus_slave asserts do_read once per read transaction on the
       external bus (synchronous on clk). This can be used to have side effects
       on read (eg. clear "data ready" on read of data register). However, in
@@ -294,47 +172,42 @@ module top (
     */
    always @(*) begin
       case (r_adr)
-	8'd6: register_data <= leddata0;
-	8'd100: register_data <= leddata1;
-	8'd60: register_data <= leddata2;
-	8'hff: register_data <= leddata3;
-	default: register_data <= 0;
+        default: register_data <= 0;
       endcase // case (r_adr)
    end
 
-   /*
-   always @(posedge clk) begin
-      if (do_read) begin
-	 case (r_adr)
-	   2'b00: leddata0 <= leddata0 + 1;
-	   2'b01: leddata1 <= leddata1 + 1;
-	   2'b10: leddata2 <= leddata2 + 1;
-	   2'b11: leddata3 <= leddata3 + 1;
-	 endcase // case (r_adr)
-      end else if (do_write) begin
-	 case (w_adr)
-	   2'b00: begin
-	      leddata0 <= w_data;
-	   end
-	   2'b01:
-	     leddata1 <= w_data;
-	   2'b10:
-	     leddata2 <= w_data;
-	   2'b11:
-	     leddata3 <= w_data;
-	 endcase // case (w_adr)
-      end
-   end
-
-   assign chk_err = (do_write & rw_adr == 3'b000);
-   error_counter my_errcnt0(clk, chk_err, leddata0, w_data, err_count);
-   */
-
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
-   
-   assign LED[1:0] = pulse_counter[2:1];
-   assign LED[2:4] = leddata0;
-   assign LED[5:7] = leddata1;
-   //assign {LED0, LED1, LED2, LED3, LED4, LED5, LED6, LED7} = err_count;
+
+   /* vga stuff */
+   wire vga_clk = clk;
+   wire [11:0] x, y;
+   wire fb_enable, fb_reset;
+   wire hsync, vsync; 
+   wire [11:0] pixel_count, line_count;
+
+   vga_blank blank(vga_clk, pixel_count, line_count, hsync, vsync, fb_reset, fb_enable);
+   vga_adr_trans #(.FB_X_MAX(1280), .FB_Y_MAX(1024)) trans(vga_clk, pixel_count, line_count, fb_reset, fb_enable, x, y);
+
+   wire buf_w = do_write;
+   wire [6:0] w_col, w_row;
+   wire [7:0] buf_in = w_data;
+   wire [7:0] buf_out;
+   assign w_col = w_adr;
+   char_buf buffer(vga_clk, buf_w, clk, x[10:3], y[10:4], w_row, w_col, buf_in, buf_out);
+
+   wire [7:0] pixels;
+   font_rom rom(vga_clk, y[3:0], buf_out, pixels);
+
+   reg pixel;
+   reg [2:0] ascii_x;
+   always @(posedge vga_clk) begin
+     pixel <= pixels[ascii_x];
+     ascii_x <= ~(x[2:0]-1);
+   end
+
+   assign red = ~fb_enable ? 0 : (pixel ? 'b11 : 0);
+   assign green = ~fb_enable ? 0 : (pixel ? 'b11 : 0);
+   assign blue = 0;
+
 endmodule

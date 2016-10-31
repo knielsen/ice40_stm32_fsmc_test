@@ -1,11 +1,11 @@
-set_io LED[0] B5
-set_io LED[1] B4
-set_io LED[2] A2
-set_io LED[3] A1
-set_io LED[4] C5
-set_io LED[5] C4
-set_io LED[6] B3
-set_io LED[7] C3
+#set_io LED[0] B5
+#set_io LED[1] B4
+#set_io LED[2] A2
+#set_io LED[3] A1
+#set_io LED[4] C5
+#set_io LED[5] C4
+#set_io LED[6] B3
+#set_io LED[7] C3
 set_io crystal_clk J3
 set_io STM32_PIN R16
 set_io aNE N12
@@ -40,3 +40,15 @@ set_io aD[15] P10
 
 set_io uart_tx_in T15
 set_io uart_tx_out B12
+
+set_io red[0] G15
+set_io red[1] F15
+set_io red[2] E14
+set_io green[0] J14
+set_io green[1] F14
+set_io green[2] H14
+set_io blue[0] M16
+set_io blue[1] L16
+set_io blue[2] K16
+set_io hsync D15
+set_io vsync D14

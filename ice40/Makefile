@@ -5,7 +5,7 @@ DEVICE = hx8k
 all: $(PROJ).rpt $(PROJ).bin
 
 %.blif: %.v
-	yosys -q -p 'synth_ice40 -top top -blif $@' $<
+	yosys -q -p 'synth_ice40 -top top -blif $@' font.v char_buf.v vga.v $<
 
 %.asc: $(PIN_DEF) %.blif
 	arachne-pnr -d $(subst hx,,$(subst lp,,$(DEVICE))) -o $@ -p $^
