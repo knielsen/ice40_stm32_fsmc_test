@@ -1,18 +1,18 @@
 Small test of fast communication between STM32F4 and ICE40 using the STM32 FSMC.
 
-Pinout for the FSMC:
+Pinout for the FSMC (this for plugged into the J3 slot):
 
   func  STM32  ICE40
-  A0    PF0    E14
-  A1    PF1    H16
-  D0	PD14   F15
-  D1	PD15   F16
-  D2	PD0    G16
-  NE2	PG9    G15
-  NOE	PD4    H14
-  NWE	PD5    F14
+  A0    PF0    R4
+  A1    PF1    R3
+  D0	PD14   N10
+  D1	PD15   M11
+  D2	PD0    T16
+  NE2	PG9    N12
+  NOE	PD4    T13
+  NWE	PD5    P13
 
-The external clock for the ICE40 is on J3. A test pin PF11 on the
-STM32F4 is connected to P16 on the ICE40. A serial Tx out from STM32
-can be connected from PA2 on the STM32F4 board to J14 on the ICE40
+The external clock for the ICE40 is on J3. A test pin PB11 on the
+STM32F4 is connected to R16 on the ICE40. A serial Tx out from STM32
+can be connected from PB10 on the STM32F4 board to T15 on the ICE40
 (will be proxied to the FTDI on the ICE40 breakout board).

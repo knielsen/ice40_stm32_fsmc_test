@@ -363,6 +363,9 @@ static void SetSysClock(void)
   else
   {
     HSEStatus = (uint32_t)0x00;
+    // Halt so we can know HSE failed (eg. check with debugger).
+    for (;;)
+      ;
   }
 
   if (HSEStatus == (uint32_t)0x01)
