@@ -16,6 +16,8 @@ all: $(PROJ).rpt $(PROJ).bin
 %.rpt: %.asc
 	icetime -d $(DEVICE) -mtr $@ $<
 
+$(PROJ).blif: font.list
+
 prog: $(PROJ).bin
 	iceprog $<
 
