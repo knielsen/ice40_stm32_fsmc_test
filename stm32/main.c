@@ -10,6 +10,8 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <stm32f4xx.h>
 
@@ -748,6 +750,35 @@ test_fsmc_5()
 }
 
 
+__attribute__((unused))
+static void
+test_charbuf(void)
+{
+  static char buf[] = "     The quick brown fox jumps over the lazy dog     ";
+  uint32_t len = sizeof(buf) - 1;
+  uint32_t ledstate = 0;
+
+  for (;;) {
+    uint32_t i;
+    char tmp;
+
+    for (i = 5; i < 128-5; ++i)
+      write_fpga(i*2, buf[i % len]);
+
+    tmp = buf[0];
+    memmove(buf, buf+1, len-1);
+    buf[len-1] = tmp;
+
+    delay(MCU_HZ/3/5);
+
+    if ((ledstate = !ledstate))
+      led_on();
+    else
+      led_off();
+  }
+}
+
+
 static void
 fsmc_manual_init(void)
 {
@@ -900,11 +931,12 @@ int main(void)
   //mem_test();
   //pulse_pin_test();
   //fpga_test();
-  test_fsmc_reliability();
+  //test_fsmc_reliability();
   //test_fsmc_2();
   //test_fsmc_3();
   //test_fsmc_4();
   //test_fsmc_5();
+  test_charbuf();
 
   return 0;
 }
