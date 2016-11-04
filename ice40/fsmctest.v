@@ -7,6 +7,7 @@ module pllclk (input ext_clock, output pll_clock, input nrst, output lock);
 
    assign bypass = 1'b0;
 
+   // DIVR=0 DIVF=71 DIVQ=3  freq=12/1*72/8 = 108 MHz
    SB_PLL40_CORE #(.FEEDBACK_PATH("SIMPLE"), .PLLOUT_SELECT("GENCLK"),
 		   .DIVR(4'd0), .DIVF(7'b1000111), .DIVQ(3'b011),
 		   .FILTER_RANGE(3'b001)
