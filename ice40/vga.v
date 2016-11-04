@@ -74,7 +74,7 @@ module vga_adr_trans(input clk, input [11:0] pixel_count, line_count, input fb_r
   end 
 endmodule
 
-module vga_pos(input clk, output enable, output [11:0] x, y);
+module vga_pos(input vga_clk, output enable, output [11:0] x, y);
   wire fb_reset;
   wire fb_enable;
   wire hsync, vsync; 
