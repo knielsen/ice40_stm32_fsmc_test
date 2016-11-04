@@ -112,6 +112,10 @@ clean:
 flash: $(PROJ_NAME).elf
 	st-flash write $(PROJ_NAME).bin 0x8000000
 
+# Program over DFU (must manually put switch in DFU-mode and reset)
+dfu: $(PROJ_NAME).elf
+	dfu-util --download $(PROJ_NAME).bin --device 0483:df11 --alt 0 -s 0x08000000
+
 .PHONY: debug
 debug:
 # before you start gdb, you must start st-util
