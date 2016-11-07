@@ -754,7 +754,13 @@ static void
 vga_putchar(uint32_t x, uint32_t y, char c)
 {
   write_fpga(0x00*2, x+160*y);
-  write_fpga(0x01*2, c);
+  write_fpga(0x02*2, c);
+}
+
+static void
+vga_putnextchar(char c)
+{
+  write_fpga(0x03*2, c);
 }
 
 
@@ -834,9 +840,9 @@ test_charbuf3(void)
         if (i == 0)
           vga_putchar(i, j, '0' + (j % 10));
         else if (j == 0)
-          vga_putchar(i, j, '0' + (i % 10));
+          vga_putnextchar('0' + (i % 10));
         else
-          vga_putchar(i, j, 'a' + ((i+j+del) % 26));
+          vga_putnextchar((j%2 ? 'a' : 'A') + ((i+j+del) % 26));
       }
     }
     ++del;

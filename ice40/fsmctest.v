@@ -187,9 +187,15 @@ module top (
 	      // Write charbuf address
 	      chadr <= w_data;
 	      end
-	   8'h01: begin
+	   8'h02: begin
 	      // Write charbuf data
 	      chdata <= w_data[7:0];
+	      chbuf_w <= 1'b1;
+	   end
+	   8'h03: begin
+	      // Write charbuf data with auto-increment of address
+	      chdata <= w_data[7:0];
+	      chadr <= chadr + 1;
 	      chbuf_w <= 1'b1;
 	   end
 	 endcase
