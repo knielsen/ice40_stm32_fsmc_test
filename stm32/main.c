@@ -750,6 +750,14 @@ test_fsmc_5()
 }
 
 
+static void
+vga_putchar(uint32_t x, uint32_t y, char c)
+{
+  write_fpga(0x00*2, x+160*y);
+  write_fpga(0x01*2, c);
+}
+
+
 __attribute__((unused))
 static void
 test_charbuf(void)
@@ -770,6 +778,70 @@ test_charbuf(void)
     buf[len-1] = tmp;
 
     delay(MCU_HZ/3/5);
+
+    if ((ledstate = !ledstate))
+      led_on();
+    else
+      led_off();
+  }
+}
+
+
+__attribute__((unused))
+static void
+test_charbuf2(void)
+{
+  static char buf[] = "     The quick brown fox jumps over the lazy dog     ";
+  uint32_t len = sizeof(buf) - 1;
+  uint32_t ledstate = 0;
+
+  for (;;) {
+    uint32_t i, j;
+    char tmp;
+
+    for (j = 0; j < 64; ++j) {
+      for (i = 5+j; i < 160-j-5; ++i) {
+        vga_putchar(i, j, buf[i % len]);
+      }
+    }
+
+    tmp = buf[0];
+    memmove(buf, buf+1, len-1);
+    buf[len-1] = tmp;
+
+    delay(MCU_HZ/3/2);
+
+    if ((ledstate = !ledstate))
+      led_on();
+    else
+      led_off();
+  }
+}
+
+
+__attribute__((unused))
+static void
+test_charbuf3(void)
+{
+  uint32_t del = 0;
+  uint32_t ledstate = 0;
+
+  for (;;) {
+    uint32_t i, j;
+
+    for (j = 0; j < 64; ++j) {
+      for (i = 0; i < 160; ++i) {
+        if (i == 0)
+          vga_putchar(i, j, '0' + (j % 10));
+        else if (j == 0)
+          vga_putchar(i, j, '0' + (i % 10));
+        else
+          vga_putchar(i, j, 'a' + ((i+j+del) % 26));
+      }
+    }
+    ++del;
+
+    delay(MCU_HZ/3/2);
 
     if ((ledstate = !ledstate))
       led_on();
@@ -936,7 +1008,9 @@ int main(void)
   //test_fsmc_3();
   //test_fsmc_4();
   //test_fsmc_5();
-  test_charbuf();
+  //test_charbuf();
+  //test_charbuf2();
+  test_charbuf3();
 
   return 0;
 }

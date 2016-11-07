@@ -177,6 +177,29 @@ module top (
       endcase // case (r_adr)
    end
 
+   reg [15:0] chadr;
+   reg [7:0] chdata;
+   reg 	     chbuf_w;
+   always @(posedge clk) begin
+      if (do_write) begin
+	 case (w_adr)
+	   8'h00: begin
+	      // Write charbuf address
+	      chadr <= w_data;
+	      end
+	   8'h01: begin
+	      // Write charbuf data
+	      chdata <= w_data[7:0];
+	      chbuf_w <= 1'b1;
+	   end
+	 endcase
+      end else begin
+	 if (chbuf_w == 1'b1) begin
+	    chbuf_w <= 1'b0;
+	 end
+      end
+   end // always @ (posedge_clk)   
+
    /* For debugging, proxy an UART Tx signal to the FTDI chip. */
    assign uart_tx_out = uart_tx_in;
 
@@ -190,12 +213,10 @@ module top (
    vga_blank blank(vga_clk, pixel_count, line_count, hsync, vsync, fb_reset, fb_enable);
    vga_adr_trans #(.FB_X_MAX(1280), .FB_Y_MAX(1024)) trans(vga_clk, pixel_count, line_count, fb_reset, fb_enable, x, y);
 
-   wire buf_w = do_write;
    wire [7:0] w_col, w_row;
-   wire [7:0] buf_in = w_data;
    wire [7:0] buf_out;
    assign w_col = w_adr;
-   char_buf buffer(vga_clk, buf_w, clk, y[10:4], x[10:3], w_col, buf_in, buf_out);
+   char_buf buffer(vga_clk, chbuf_w, clk, y[10:4], x[10:3], chadr[13:0], chdata, buf_out);
 
    wire [7:0] pixels;
    font_rom rom(vga_clk, y[3:0], buf_out, pixels);
