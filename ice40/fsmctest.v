@@ -191,11 +191,11 @@ module top (
    vga_adr_trans #(.FB_X_MAX(1280), .FB_Y_MAX(1024)) trans(vga_clk, pixel_count, line_count, fb_reset, fb_enable, x, y);
 
    wire buf_w = do_write;
-   wire [6:0] w_col, w_row;
+   wire [7:0] w_col, w_row;
    wire [7:0] buf_in = w_data;
    wire [7:0] buf_out;
    assign w_col = w_adr;
-   char_buf buffer(vga_clk, buf_w, clk, x[10:3], y[10:4], w_row, w_col, buf_in, buf_out);
+   char_buf buffer(vga_clk, buf_w, clk, y[10:4], x[10:3], w_col, buf_in, buf_out);
 
    wire [7:0] pixels;
    font_rom rom(vga_clk, y[3:0], buf_out, pixels);

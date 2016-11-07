@@ -762,7 +762,7 @@ test_charbuf(void)
     uint32_t i;
     char tmp;
 
-    for (i = 5; i < 128-5; ++i)
+    for (i = 5; i < 256-5; ++i)
       write_fpga(i*2, buf[i % len]);
 
     tmp = buf[0];
