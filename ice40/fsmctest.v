@@ -180,6 +180,8 @@ module top (
    reg [15:0] chadr;
    reg [7:0] chdata;
    reg 	     chbuf_w;
+   reg 	     chadr_inc;
+
    always @(posedge clk) begin
       if (do_write) begin
 	 case (w_adr)
@@ -195,13 +197,17 @@ module top (
 	   8'h03: begin
 	      // Write charbuf data with auto-increment of address
 	      chdata <= w_data[7:0];
-	      chadr <= chadr + 1;
 	      chbuf_w <= 1'b1;
+	      chadr_inc <= 1'b1;
 	   end
 	 endcase
       end else begin
 	 if (chbuf_w == 1'b1) begin
 	    chbuf_w <= 1'b0;
+	 end
+	 if (chadr_inc == 1'b1) begin
+	    chadr <= chadr + 1;
+	    chadr_inc <= 1'b0;
 	 end
       end
    end // always @ (posedge_clk)   
