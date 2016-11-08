@@ -1,5 +1,5 @@
 module char_buf(input r_clk, w, w_clk, input [7:0] r_row, r_col, input [13:0] w_addr, input [7:0] a_in, output reg [7:0] a_out);
-  reg [7:0] buffer[0:(160*64)];
+  reg [7:0] buffer[0:(160*64-1)];
   wire [6:0] sum1;
   wire [6:0] sum2;
   wire [13:0] idx;
