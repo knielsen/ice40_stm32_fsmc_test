@@ -228,7 +228,7 @@ module top (
    wire [7:0] w_col, w_row;
    wire [7:0] buf_out;
    assign w_col = w_adr;
-   char_buf buffer(vga_clk, chbuf_w, clk, y[10:4], x[10:3], chadr[13:0], chdata, buf_out);
+   char_buf buffer(vga_clk, chbuf_w, y[10:4], x[10:3], chadr[13:0], chdata, buf_out);
 
    wire [7:0] pixels;
    font_rom rom(vga_clk, y[3:0], buf_out, pixels);

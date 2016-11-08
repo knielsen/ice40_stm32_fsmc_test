@@ -26,7 +26,7 @@ parameter HLINE = 1688;
 parameter VFRONT = 1;
 parameter VSYNCP = 3;
 parameter VBACK = 38;
-parameter VFRAME = 1065;
+parameter VFRAME = 1066;
 
 assign vsync = (line_count >= VFRONT & line_count < (VFRONT + VSYNCP));
 assign fb_enable = pixel_count >= (HFRONT + HSYNCP + HBACK) & line_count >= (VFRONT + VSYNCP + VBACK);
