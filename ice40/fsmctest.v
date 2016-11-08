@@ -219,10 +219,10 @@ module top (
    wire vga_clk = clk;
    wire [11:0] x, y;
    wire fb_enable, fb_reset;
-   wire hsync, vsync; 
+   wire i_hsync, i_vsync; 
    wire [11:0] pixel_count, line_count;
 
-   vga_blank blank(vga_clk, pixel_count, line_count, hsync, vsync, fb_reset, fb_enable);
+   vga_blank blank(vga_clk, pixel_count, line_count, i_hsync, i_vsync, fb_reset, fb_enable);
    vga_adr_trans #(.FB_X_MAX(1280), .FB_Y_MAX(1024)) trans(vga_clk, pixel_count, line_count, fb_reset, fb_enable, x, y);
 
    wire [7:0] w_col, w_row;
@@ -240,8 +240,13 @@ module top (
      ascii_x <= ~(x[2:0]-1);
    end
 
-   assign red = ~fb_enable ? 0 : (pixel ? 'b11 : 0);
-   assign green = ~fb_enable ? 0 : (pixel ? 'b11 : 0);
-   assign blue = 0;
+   // Buffer output lines.
+   always @(posedge vga_clk) begin
+      red <= ~fb_enable ? 0 : (pixel ? 'b11 : 0);
+      green <= ~fb_enable ? 0 : (pixel ? 'b11 : 0);
+      blue <= 0;
+      hsync <= i_hsync;
+      vsync <= i_vsync;
+   end
 
 endmodule
